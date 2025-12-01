@@ -224,3 +224,561 @@ public class CreatePostalAddressRequest {
     @JsonProperty("endDate")
     private String endDate;
 }
+package com.ing.datadist.api.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ing.apisdk.toolkit.connectivity.api.JavaService;
+import com.ing.apisdk.toolkit.connectivity.transport.http.japi.RichHttpRequestBuilder;
+import com.ing.apisdk.toolkit.connectivity.transport.http.japi.RichHttpRequestBuilderException;
+
+import com.ing.datadist.api.config.InvolvedPartyApiProperties;
+import com.ing.datadist.api.exception.DataDistributionApiException;
+import com.ing.datadist.api.model.*;
+import com.ing.datadist.api.utils.RegkeyEnum;
+import com.twitter.finagle.http.Method;
+import com.twitter.finagle.http.Request;
+import com.twitter.finagle.http.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import scala.collection.JavaConverters;
+
+import java.util.Map;
+
+import java.util.concurrent.CompletableFuture;
+
+@Slf4j
+@Component
+public class OnePamRepository {
+
+    private final JavaService<Request, Response> apiClient;
+    private final ObjectMapper objectMapper;
+    private final InvolvedPartyApiProperties apiProperties;
+
+    public OnePamRepository(@Qualifier("integrationServiceGeneric") JavaService<Request, Response> apiClient,
+                            ObjectMapper objectMapper,
+                            InvolvedPartyApiProperties apiProperties) {
+        this.apiClient = apiClient;
+        this.objectMapper = objectMapper;
+        this.apiProperties = apiProperties;
+    }
+
+    public CompletableFuture<CreateInvolvedPartyResponseV5> createInvolvedParty(CreateInvolvedPartyRequestV5 payload) {
+        try {
+            log.info("Demo_28_Nov_API createInvolvedParty request payload: {}", payload);
+            String url = RegkeyEnum.CREATE_INVOLVED_PARTY.endpoint;
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "IN_ADMIN")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        try {
+                            log.info("createInvolvedParty response: {}", response);
+                            return objectMapper.readValue(response.contentString(), CreateInvolvedPartyResponseV5.class);
+                        } catch (Exception e) {
+                            log.error("createInvolvedParty Response code:{}, error: {}",response.statusCode(), e.getMessage());
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.CREATE_INVOLVED_PARTY,
+                                    response.statusCode(),
+                                    "Failed to parse response from Involved Party API",
+                                    e.getMessage()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("createInvolvedParty API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.CREATE_INVOLVED_PARTY,
+                    "Failed to build request for create involved party API",
+                    e.getMessage()
+            );
+        }
+    }
+
+    public CompletableFuture<Response> updateExternalIdentifier(String uuid, UpdateExternalIdentifierOrganisationUnitRequest payload) {
+        try {
+            log.info("Demo_28_Nov_API updateExternalIdentifier request payload: {}", payload);
+            String url = RegkeyEnum.UPDATE_EXTERNAL_IDENTIFIER.resolveEndpoint(uuid);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "IN_ADMIN")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                            return response;
+                        } else {
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.UPDATE_EXTERNAL_IDENTIFIER,
+                                    "Failed to update external identifier",
+                                    "Status: " + response.statusCode()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            throw new DataDistributionApiException(
+                    RegkeyEnum.UPDATE_EXTERNAL_IDENTIFIER,
+                    "Failed to build request for update external identifier API",
+                    e.getMessage()
+            );
+        }
+    }
+
+    public CompletableFuture<Response> createOrganisationUnitHierarchy(OrganisationUnitOrganisationRelationshipRequest payload) {
+        try {
+            log.info("createOrganisationUnitHierarchy request payload: {}", payload);
+            String url = RegkeyEnum.CREATE_ORGANISATION_UNIT_HIERARCHY.endpoint;
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "IN_ADMIN")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                            return response;
+                        } else {
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.CREATE_ORGANISATION_UNIT_HIERARCHY,
+                                    "Failed to create organisation unit hierarchy",
+                                    "Status: " + response.statusCode()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            throw new DataDistributionApiException(
+                    RegkeyEnum.CREATE_ORGANISATION_UNIT_HIERARCHY,
+                    "Failed to build request for organisation unit hierarchy API",
+                    e.getMessage()
+            );
+        }
+    }
+
+    public CompletableFuture<SearchInvolvedPartiesResponseV1> searchInvolvedPartyByInternalIdentifier(SearchInvolvedPartiesRequestV1 payload) {
+        try {
+            String url = RegkeyEnum.SEARCH_INVOLVED_PARTY.endpoint;
+            log.info("Demo_28_Nov_API searchInvolvedPartyByInternalIdentifier request payload: {}", payload);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("Content-Type", "application/json")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        try {
+                            log.info("searchInvolvedPartyByInternalIdentifier response: {}", response);
+                            return objectMapper.readValue(response.contentString(), SearchInvolvedPartiesResponseV1.class);
+                        } catch (Exception e) {
+                            log.error("searchInvolvedPartyByInternalIdentifier error: {}", e.getMessage());
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.SEARCH_INVOLVED_PARTY,
+                                    response.statusCode(),
+                                    "Failed to parse response from search Involved Party by internal identifier API",
+                                    e.getMessage()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("searchInvolvedPartyByInternalIdentifier API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.SEARCH_INVOLVED_PARTY,
+                    "Failed to build request for search organisation unit API",
+                    e.getMessage()
+            );
+        }
+    }
+
+    public CompletableFuture<UpdateOrganisationUnitNameV5Response> updateOrganisationUnitName(
+            UpdateOrganisationUnitNameV5Request payload, String uuid, String nameType) {
+        try {
+            log.info("updateOrganisationUnitName request payload: {}", payload);
+            String url = RegkeyEnum.UPDATE_ORGANISATION_UNIT_NAME.resolveEndpoint(uuid, nameType);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Patch())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "X-ING-LastUpdateUser")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        try {
+                            log.info("updateOrganisationUnitName response: {}", response);
+                            return objectMapper.readValue(response.contentString(), UpdateOrganisationUnitNameV5Response.class);
+                        } catch (Exception e) {
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.UPDATE_ORGANISATION_UNIT_NAME,
+                                    response.statusCode(),
+                                    "Failed to parse response from updateOrganisationUnitName API" ,
+                                    e.getMessage()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            throw new DataDistributionApiException(
+                    RegkeyEnum.UPDATE_ORGANISATION_UNIT_NAME,
+                    "Failed to build request for updateOrganisationUnitName API",
+                    e.getMessage()
+            );
+        }
+    }
+
+    public CompletableFuture<UpdateInvolvedPartyResponseV5> updateInvolvedParty(UpdateInvolvedPartyRequestV5 payload, String uuid) {
+        try {
+            log.info("updateInvolvedParty request payload: {}", payload);
+            String url = RegkeyEnum.UPDATE_INVOLVED_PARTY.resolveEndpoint(uuid);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Patch())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "X-ING-LastUpdateUser")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        try {
+                            log.info("updateInvolvedParty response: {}", response);
+                            return objectMapper.readValue(response.contentString(), UpdateInvolvedPartyResponseV5.class);
+                        } catch (Exception e) {
+                            log.error("updateInvolvedParty Response code:{}, error: {}", response.statusCode(), e.getMessage());
+                            throw new DataDistributionApiException(
+                            RegkeyEnum.UPDATE_INVOLVED_PARTY,
+                                    response.statusCode(),
+                                    "Failed to parse response for Update InvolvedParty Request API",
+                                    e.getMessage()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("updateInvolvedParty API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.UPDATE_INVOLVED_PARTY,
+                    "Failed to build request for Update InvolvedParty Request API",
+                    e.getMessage()
+            );
+        }
+    }
+
+    private static void printRequest(Request req) {
+        try {
+            log.info("--------------------------------------------------------------------------------------");
+            log.info("Demo_28_Nov_API Request Info");
+            log.info("Method: {}", req.method());
+            log.info("URI: {}", req.uri());
+            log.info("Version: {}", req.version());
+            Map<String, String> headerMap = JavaConverters.mapAsJavaMapConverter(req.headerMap()).asJava();
+            for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+                log.info("Header: {}: {}", entry.getKey(), entry.getValue());
+            }
+            log.info("Body: {}", req.contentString());
+            log.info("--------------------------------------------------------------------------------------");
+        } catch (Exception e) {
+            log.error("Exception while printing request", e);
+        }
+    }
+//
+//    public CompletableFuture<PostalAddressResponse> createPostalAddress(String uuid, CreatePostalAddressRequest payload) {
+//        try {
+//            log.info("createPostalAddress request payload: {}", payload);
+//            String url = RegkeyEnum.CREATE_POSTAL_ADDRESS.resolveEndpoint(uuid);
+//            String jsonPayload = objectMapper.writeValueAsString(payload);
+//            Request request = new RichHttpRequestBuilder()
+//                    .withUrl(url)
+//                    .withMethod(Method.Post())
+//                    .withJsonContent(jsonPayload)
+//                    .withHeader("X-ING-LastUpdateUser", "X-ING-LastUpdateUser")
+//                    .build();
+//            printRequest(request);
+//            return apiClient.apply(request)
+//                    .thenApply(response -> {
+//                        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+//                            log.info("createPostalAddress response: {}", response);
+//                            return null;
+//                        } else {
+//                            log.error("Failed to create postal address. Status: {}", response.statusCode());
+//                            throw new DataDistributionApiException(
+//                                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+//                                    "Failed to create postal address",
+//                                    "Status: " + response.statusCode()
+//                            );
+//                        }
+//                    });
+//        } catch (Exception e) {
+//            log.error("createPostalAddress API error: {}", e.getMessage());
+//            throw new DataDistributionApiException(
+//                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+//                    "Failed to build request for postal address creation",
+//                    e.getMessage()
+//            );
+//        }
+//    }
+
+
+    public CompletableFuture<PostalAddressResponse> createPostalAddress(String uuid, CreatePostalAddressRequest payload) {
+        try {
+            log.info("createPostalAddress request payload: {}", payload);
+            String url = RegkeyEnum.CREATE_POSTAL_ADDRESS.resolveEndpoint(uuid);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("Content-Type", "application/json")  // add content type
+                    .withHeader("X-ING-LastUpdateUser", "X-ING-LastUpdateUser")
+                    .build();
+
+            printRequest(request);
+
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        int status = response.statusCode();
+                        String body = response.contentString();
+
+                        log.info("createPostalAddress response: Status({}), Body: {}", status, body);
+
+                        if (status >= 200 && status < 300) {
+                            // Example response (based on your logs):
+                            // {
+                            //   "postalAddress": {
+                            //     "postalAddressUsageType": "BSN_ADR",
+                            //     "countryCode": "BE",
+                            //     "lastUpdateUser": "...",
+                            //     "lastUpdateDate": "...",
+                            //     "effectiveDate": "..."
+                            //   },
+                            //   "_links": { ... }
+                            // }
+
+                            // Parse minimal fields from PAM and merge with request values
+                            try {
+                                var root = objectMapper.readTree(body);
+                                var paNode = root.path("postalAddress");
+
+                                String usageTypeFromPam = paNode.path("postalAddressUsageType").asText(null);
+                                String countryFromPam = paNode.path("countryCode").asText(null);
+
+                                // Build a normalized response: fill address lines from the request, usage/country from PAM when present
+                                return PostalAddressResponse.builder()
+                                        .streetName(payload.getStreetName())
+                                        .houseNumber(payload.getHouseNumber())
+                                        .houseNumberAddition(payload.getHouseNumberAddition())
+                                        .postalCode(payload.getPostalCode())
+                                        .cityName(payload.getCityName())
+                                        .postalAddressUsageType(usageTypeFromPam != null ? usageTypeFromPam
+                                                : (payload.getPostalAddressUsageType() != null ? payload.getPostalAddressUsageType() : "BSN_ADR"))
+                                        .countryCode(countryFromPam != null ? countryFromPam
+                                                : (payload.getCountryCode() != null ? payload.getCountryCode() : "BE"))
+                                        .build();
+                            } catch (Exception parseEx) {
+                                // If parsing fails, still return a non-null response using request values
+                                log.warn("Failed to parse PAM postal-address response JSON, falling back to request values. Error: {}", parseEx.getMessage());
+                                return PostalAddressResponse.builder()
+                                        .streetName(payload.getStreetName())
+                                        .houseNumber(payload.getHouseNumber())
+                                        .houseNumberAddition(payload.getHouseNumberAddition())
+                                        .postalCode(payload.getPostalCode())
+                                        .cityName(payload.getCityName())
+                                        .postalAddressUsageType(
+                                                payload.getPostalAddressUsageType() != null ? payload.getPostalAddressUsageType() : "BSN_ADR")
+                                        .countryCode(payload.getCountryCode() != null ? payload.getCountryCode() : "BE")
+                                        .build();
+                            }
+                        } else {
+                            log.error("Failed to create postal address. Status: {}", status);
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+                                    "Failed to create postal address",
+                                    "Status: " + status
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("createPostalAddress API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+                    "Failed to build request for postal address creation",
+                    e.getMessage()
+            );
+        }
+    }
+
+
+    //fixme need fetch the even OrganisationUnitHierarchy uuid from Accounting table later
+    public OrganisationUnitOrganisationRelationshipResponse closeOrganisationHierarchyRelationship(String uuid, OrganisationUnitOrganisationRelationshipRequest payload ) {
+        try {
+            log.info("closeOrganisationHierarchyRelationship request payload: {}", payload);
+            String url = RegkeyEnum.CLOSE_ORGANISATION_HIERARCHY_RELATIONSHIP.resolveEndpoint(uuid);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "IN_ADMIN")
+                    .build();
+            printRequest(request);
+            Response response = apiClient.apply(request).get();
+            if (response.statusCode() >= 200) {
+                log.info("closeOrganisationHierarchyRelationship response: {}", response);
+                ObjectMapper mapper = new ObjectMapper();
+                return mapper.readValue(response.contentString(), OrganisationUnitOrganisationRelationshipResponse.class);
+            } else {
+                log.error("closeOrganisationHierarchyRelationship Response code:{}", response.statusCode());
+                throw new DataDistributionApiException(
+                        RegkeyEnum.CLOSE_ORGANISATION_HIERARCHY_RELATIONSHIP,
+                        "Failed to close relationship",
+                        "Status: " + response.statusCode()
+                );
+            }
+        } catch (Exception e) {
+            log.error("closeOrganisationHierarchyRelationship API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.CLOSE_ORGANISATION_HIERARCHY_RELATIONSHIP,
+                    "Error during closing organisation hierarchy relationship",
+                    e.getMessage());
+        }
+    }
+
+    public CompletableFuture<UpdateDigitalAddressV5Response> updateDigitalAddress(
+            UpdateDigitalAddressV5Request payload,
+            String uuid,
+            String usageType) {
+        try {
+            log.info("updateDigitalAddress request payload: {}", payload);
+            String url = RegkeyEnum.UPDATE_DIGITAL_ADDRESS.resolveEndpoint(uuid, usageType);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            log.info("Updating Digital Address for UUID: {} usageType: {}", uuid, usageType);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Patch())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "IN_ADMIN")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        try {
+                            log.info("updateDigitalAddress response: {}", response);
+                            return objectMapper.readValue(
+                                    response.contentString(),
+                                    UpdateDigitalAddressV5Response.class
+                            );
+                        } catch (Exception e) {
+                            log.error("updateDigitalAddress Response code:{}, error: {}", response.statusCode(), e.getMessage());
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.UPDATE_DIGITAL_ADDRESS,
+                                    "Failed to parse response from updateDigitalAddress API",
+                                    e.getMessage()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("updateDigitalAddress API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.UPDATE_DIGITAL_ADDRESS,
+                    "Failed to build request for updateDigitalAddress API",
+                    e.getMessage()
+            );
+        }
+    }
+
+    public void softClosePostalAddress(String uuid, String usageType, SoftClosePostalAddressRequest payload) {
+        try {
+            log.info("softClosePostalAddress request payload: {}", payload);
+            String url = RegkeyEnum.CLOSE_POSTAL_ADDRESS.resolveEndpoint(uuid, usageType);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            log.info("Calling OnePAM API to soft-close postal address for UUID: {} usageType: {}", uuid, usageType);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "IN_ADMIN")
+                    .build();
+            printRequest(request);
+            Response response = apiClient.apply(request).get();
+            log.info("softClosePostalAddress response: {}", response);
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.error("createInvolvedParty Response code:{}", response.statusCode());
+                throw new DataDistributionApiException(
+                        RegkeyEnum.CLOSE_POSTAL_ADDRESS,
+                        "Failed to soft-close postal address",
+                        "Status: " + response.statusCode()
+                );
+            }
+        } catch (Exception e) {
+            log.error("softClosePostalAddress API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.CLOSE_POSTAL_ADDRESS,
+                    "Error during postal address soft-close",
+                    e.getMessage()
+            );
+        }
+    }
+    public CompletableFuture<CreateDigitalAddressV5Response> createDigitalAddress(
+            String uuid,
+            CreateDigitalAddressV5Request payload
+    ) {
+        try {
+            log.info("createDigitalAddress request payload: {}", payload);
+            String url = RegkeyEnum.CREATE_DIGITAL_ADDRESS.resolveEndpoint(uuid);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            log.info("Creating Digital Address for UUID: {}", uuid);
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("X-ING-LastUpdateUser", "IN_ADMIN")
+                    .build();
+            printRequest(request);
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        try {
+                            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                                log.info("createDigitalAddress response: {}", response);
+                                return objectMapper.readValue(
+                                        response.contentString(),
+                                        CreateDigitalAddressV5Response.class
+                                );
+                            } else {
+                                log.error("createDigitalAddress Response code:{}", response.statusCode());
+                                throw new DataDistributionApiException(
+                                        RegkeyEnum.CREATE_DIGITAL_ADDRESS,
+                                        "Failed to create digital address",
+                                        "Status: " + response.statusCode()
+                                );
+                            }
+                        } catch (Exception e) {
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.CREATE_DIGITAL_ADDRESS,
+                                    "Failed to parse response from createDigitalAddress API",
+                                    e.getMessage()
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("createDigitalAddress API error: {}", e.getMessage());
+            throw new DataDistributionApiException(
+                    RegkeyEnum.CREATE_DIGITAL_ADDRESS,
+                    "Failed to build request for createDigitalAddress API",
+                    e.getMessage()
+            );
+        }
+    }
+}

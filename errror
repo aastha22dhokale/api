@@ -1,177 +1,93 @@
-this is example response
-so the hierarchy is postalAddress{} links{} hence 
+package com.ing.datadist.api.service;
+
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.CreatePostalAddressResponse;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import com.ing.datadist.api.repository.AccountingDAO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+//import java.security.Timestamp;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.concurrent.ExecutionException;
 
 
-{
-  "postalAddress": {
-    "postalAddressUsageType": "RSDNT_ADR",
-    "countryCode": "IT",
-    "countryRegionCode": "IT-RM",
-    "districtName": "Zuidoost",
-    "cityName": "ROMA",
-    "cityAreaName": "Fratton",
-    "regionName": "Greater New York",
-    "postalCode": "808",
-    "streetName": "Rodeo Drive",
-    "houseNumber": "123",
-    "houseNumberAddition": "A",
-    "buildingName": "White House",
-    "deliveryInformation": "Watch out for the angry dog",
-    "floor": "5",
-    "locationUnitNumber": "910",
-    "departmentName": "Retail department",
-    "subdepartmentName": "Electronics",
-    "poBoxNumber": "123",
-    "streetType": "ES_CALLE",
-    "unstructuredAddressLine1": "Tempura Road",
-    "unstructuredAddressLine2": "Big house on the hill",
-    "unstructuredAddressLine3": "Third house from the right",
-    "deliveryFailureReasonType": "ADR_NOT_EXST",
-    "dataSource": "FOS_IT",
-    "lastUpdateUser": "OnePam",
-    "lastUpdateDate": "2021-04-27T09:11:11.111Z",
-    "effectiveDate": "2020-10-10T08:11:12.345Z",
-    "lastVerificationDate": "2023-05-03T10:11:12.999Z",
-    "endDate": "2050-12-12T21:59:59.999Z"
-  },
-  "_links": {
-    "self": {
-      "href": "https://(hostname):(port)/v5/involved-parties/a15f4243-e38b-4d96-af99-9c40c8dd08ab/post-addresses"
-    }
-  }
-}
+@Service
 
+@Slf4j
 
-this changes     public void insertPostalAddress(String uuid, CreatePostalAddressResponse adr) {
-//        String isoDate = postalAddressService.getE
-        jdbcTemplate.update(
-
-                "INSERT INTO accounting_table (" +
-
-                        "DD_UUID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, " +
-
-                        "ADDR_POSTAL_CODE, ADDR_COUNTRY_CODE, UPDATED_TIME" +
-
-                        ") VALUES (?, ?, ?, ?, ?, ?, ?)",
-
-                uuid,
-
-                adr.getStreetName(),
-
-                adr.getHouseNumber(),
-
-                adr.getHouseNumberAddition(),
-
-                adr.getPostalCode(),
-
-                adr.getCityName(),
-
-                adr.getCountryCode(),
-
-//                adr.getUnstructuredAddressLine1(), // or digitalAddress if available
-
-                adr.getEffectiveDate() != null ? Timestamp.valueOf(adr.getEffectiveDate()) : new Timestamp(System.currentTimeMillis())
-
-        );
-
-    }
-
-
-package com.ing.datadist.api.model;
-
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Map;
-@Data
-
-@NoArgsConstructor
-
-@AllArgsConstructor
-
-@Builder
-
-public class CreatePostalAddressResponse {
-
-    @JsonProperty("postalAddress")
-
-    private PostalAddressResponse postalAddress;
-
-    @JsonProperty("_links")
-
-    private Map<String, Object> links;
-
-}
-
-package com.ing.datadist.api.model;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-
-import java.io.Serializable;
-
+public class AddressService {
 //
-@Data
+private final OnePamRepository repository;
 
-@NoArgsConstructor
+    private final AccountingDAO accountingDAO;
 
-@AllArgsConstructor
+    public AddressService(OnePamRepository repository, AccountingDAO accountingDAO) {
 
-@Builder
+        this.repository = repository;
 
-@Generated
+        this.accountingDAO = accountingDAO;
 
-public class PostalAddressResponse implements Serializable {
+    }
 
-    private static final long serialVersionUID = 1L;
+    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
 
-    @JsonProperty("postalAddressUsageType")
+        log.info("Calling OnePAM with request: {}", request);
 
-    private String postalAddressUsageType;
+        // Call repository and get wrapped response
 
-    @JsonProperty("countryCode")
+        CreatePostalAddressResponse responseWrapper = repository.createPostalAddress(uuid, request).join();
 
-    private String countryCode;
+        // Extract postalAddress object
 
-    @JsonProperty("countryRegionCode")
+        PostalAddressResponse postalAddress = responseWrapper.getPostalAddress();
 
-    private String countryRegionCode;
+        log.info("Received postalAddress: {}", postalAddress);
 
-    @JsonProperty("districtName")
+        try {
 
-    private String districtName;
+            // Convert Instant to Timestamp in proper DB format
 
-    @JsonProperty("cityName")
+            Instant effectiveInstant = postalAddress.getEffectiveDate();
 
-    private String cityName;
+            Timestamp effectiveTimestamp = effectiveInstant != null
 
-    @JsonProperty("postalCode")
+                    ? Timestamp.valueOf(LocalDateTime.ofInstant(effectiveInstant, ZoneId.systemDefault()))
 
-    private String postalCode;
+                    : null;
 
-    @JsonProperty("streetName")
+            // Insert into DB
 
-    private String streetName;
+            accountingDAO.insertPostalAddress(uuid,
 
-    @JsonProperty("houseNumber")
+                    postalAddress.getStreetName(),
 
-    private String houseNumber;
+                    postalAddress.getHouseNumber(),
 
-    @JsonProperty("houseNumberAddition")
+                    postalAddress.getHouseNumberAddition(),
 
-    private String houseNumberAddition;
+                    postalAddress.getPostalCode(),
 
-    @JsonProperty("effectiveDate")
+                    postalAddress.getCityName(),
 
-    private String effectiveDate;
+                    postalAddress.getCountryCode(),
 
-    @JsonProperty("endDate")
+                    effectiveTimestamp);
 
-    private String endDate;
+            log.info("Postal address inserted successfully for UUID={}", uuid);
 
-}
+        } catch (Exception e) {
 
+            log.error("Failed to insert postal address for UUID={} : {}", uuid, e.getMessage(), e);
+
+            throw new RuntimeException(e);
+
+        }
+
+        return postalAddress;
+
+    }
+fix

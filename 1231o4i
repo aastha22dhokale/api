@@ -1,336 +1,128 @@
-2025-12-01T16:31:26.258+05:30 DEBUG 22268 --- [Integration-Module] [gle/netty4-1-17] c.i.d.api.service.OnePamRepository       : createPostalAddress response body: {
+
+{"postalAddressUsageType":"BSN_ADR","countryCode":"BE","cityName":"","streetName":"","houseNumber":"","houseNumberAddition":"","postalCode":""}
+2025-12-01T16:39:25.459+05:30  INFO 13328 --- [Integration-Module] [   scheduling-1] o.s.batch.core.step.AbstractStep         : Step: [searchApiCallTaskletStep] executed in 24s458ms
+2025-12-01T16:39:25.459+05:30 DEBUG 13328 --- [Integration-Module] [onPool-worker-1] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Sending request [1391733150:aef1c257789c8217:ecbd628
+7fbb43ab81b144e97af5d7bda] to instance [Inet(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.10:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,InvolvedPartyAPI)))] with contents
+POST /v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/external-identifiers HTTP/1.1
+Host: apis.ing.com
+traceparent: 00-ecbd6287fbb43ab81b144e97af5d7bda-aef1c257789c8217-01
+X-B3-SpanId: 7712477692ce9d99
+Content-Type: application/json;charset=UTF-8
+X-B3-TraceId: 7712477692ce9d99
+uber-trace-id: ecbd6287fbb43ab81b144e97af5d7bda:aef1c257789c8217:0:1
+Content-Length: 247   
+2025-12-01T16:39:25.501+05:30  INFO 13328 --- [Integration-Module] [   scheduling-1] c.i.d.batch.schedular.BatchSchedular     : Batch Schedular finished name:organisationUnitEnrichmentJob status:COMPLETED
+2025-12-01T16:39:25.614+05:30  WARN 13328 --- [Integration-Module] [ntainer#3-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-onepam_test_group_local-
+005-5, groupId=onepam_test_group_local-005] The metadata response from the cluster reported a recoverable issue with correlation id 73 : {ingbenotifyexternalpartyinternalidentifier5topic=UNKNOWN_TOPIC_OR_PARTITION}
+2025-12-01T16:39:25.674+05:30 DEBUG 13328 --- [Integration-Module] [gle/netty4-1-40] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [411341336] to request [1283718403
+:Some(cf88db4087062528:eabf2c28066628362a5e49d5ccfb6722)] from instance [Inet(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.11:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2025 11:09:24 GMT
+Pragma: no-cache
+traceparent: 00-eabf2c28066628362a5e49d5ccfb6722-9532124b0d3fdca5-01
+Content-Type: application/json
+Cache-Control: no-store
+Content-Length: 397
+
+{
   "postalAddress" : {
     "postalAddressUsageType" : "BSN_ADR",
     "countryCode" : "BE",
     "lastUpdateUser" : "X-ING-LastUpdateUser",
-    "lastUpdateDate" : "2025-12-01T11:01:25.353Z",
-    "effectiveDate" : "2025-12-01T11:01:25.275Z"
+    "lastUpdateDate" : "2025-12-01T11:09:24.775Z",
+    "effectiveDate" : "2025-12-01T11:09:24.718Z"
   },
   "_links" : {
     "self" : {
-      "href" : "https://apis.ing.com/v5/involved-parties/8bd47a2c-fe53-4f37-ba64-ea6428739ec5/postal-addresses"
+      "href" : "https://apis.ing.com/v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/postal-addresses"
     }
   }
 }
-2025-12-01T16:31:26.259+05:30  INFO 22268 --- [Integration-Module] [onPool-worker-7] c.i.datadist.api.service.AddressService  : Final address for DB insert: PostalAddressResponse(p
-ostalAddressUsageType=BSN_ADR, countryCode=BE, countryRegionCode=null, districtName=null, cityName=null, postalCode=null, streetName=null, houseNumber=null, houseNumberAddition=null, effectiveDate=2025-12-01T11:01:25.275Z, endDate=null)
-2025-12-01T16:31:26.267+05:30 ERROR 22268 --- [Integration-Module] [onPool-worker-7] c.i.datadist.api.service.AddressService  : Failed to persist postal address for UUID=8bd47a2c-f
-e53-4f37-ba64-ea6428739ec5 : PreparedStatementCallback; bad SQL grammar [UPDATE DD_ACCOUNT_TBL SET EVENT_ID = eventId, ADDR_STREET_NAME = ?, ADDR_HOUSE_NUMBER = ?, ADDR_BOX_NUMBER = ?, ADDR_POSTAL_CODE = ?, ADDR_LOCALITY_NAME = ?, ADDR_COUNTRY_CODE = ?, UPDATED_TIME = ? WHERE DD_UUID = ?]
-
-org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [UPDATE DD_ACCOUNT_TBL SET EVENT_ID = eventId, ADDR_STREET_NAME = ?, ADDR_HOUSE_NUMBER = ?, ADDR_BOX_NUMBER = ?, ADDR_POSTAL_CODE = ?, ADDR_LOCALITY_NAME = ?, ADDR_COUNTRY_CODE = ?, UPDATED_TIME = ? WHERE DD_UUID = ?]
-        at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:103) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:107) ~[spring-jdbc-6.2.8.jar:6.2.8]        
-        at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1556) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:677) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:972) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1016) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1026) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at com.ing.datadist.api.repository.AccountingDAO.insertPostalAddress(AccountingDAO.java:196) ~[classes/:na]
-        at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
-        at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
-        at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:138) ~[spring-tx-6.2.8.jar:6.2.8]      
-        at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728) ~[spring-aop-6.2.8.jar:6.2.8]
-        at com.ing.datadist.api.repository.AccountingDAO$$SpringCGLIB$$0.insertPostalAddress(<generated>) ~[classes/:na]
-        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:80) ~[classes/:na]
-        at com.ing.datadist.api.service.OrganisationUnitService.lambda$processOrganisationUnit$1(OrganisationUnitService.java:156) ~[classes/:na]
-        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
-        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[na:na]
-Caused by: java.sql.SQLSyntaxErrorException: ORA-00904: "EVENTID": invalid identifier
-
-https://docs.oracle.com/error-help/db/ora-00904/
-        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:715) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:615) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4C8Oall.processError(T4C8Oall.java:1372) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:972) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:237) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4C8Oall.doOALL(T4C8Oall.java:524) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CPreparedStatement.doOall8(T4CPreparedStatement.java:298) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CPreparedStatement.executeForRows(T4CPreparedStatement.java:1510) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OracleStatement.executeSQLStatement(OracleStatement.java:2020) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OracleStatement.doExecuteWithTimeout(OracleStatement.java:1633) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.executeInternal(OraclePreparedStatement.java:3973) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.doExecuteLargeUpdate(OraclePreparedStatement.java:4339) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.executeLargeUpdate(OraclePreparedStatement.java:4316) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.executeUpdate(OraclePreparedStatement.java:4291) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatementWrapper.executeUpdate(OraclePreparedStatementWrapper.java:1007) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeUpdate(ProxyPreparedStatement.java:61) ~[HikariCP-6.3.0.jar:na]
-        at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeUpdate(HikariProxyPreparedStatement.java) ~[HikariCP-6.3.0.jar:na]
-        at org.springframework.jdbc.core.JdbcTemplate.lambda$update$2(JdbcTemplate.java:977) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:658) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        ... 22 common frames omitted
-Caused by: oracle.jdbc.OracleDatabaseException: ORA-00904: "EVENTID": invalid identifier
-
-        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:723) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        ... 40 common frames omitted
-
-2025-12-01T16:31:26.269+05:30 ERROR 22268 --- [Integration-Module] [onPool-worker-7] c.i.d.a.service.OrganisationUnitService  : Postal address create failed for UUID=8bd47a2c-fe53-
-4f37-ba64-ea6428739ec5 : org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [UPDATE DD_ACCOUNT_TBL SET EVENT_ID = eventId, ADDR_STREET_NAME = ?, ADDR_HOUSE_NUMBER = ?, ADDR_BOX_NUMBER = ?, ADDR_POSTAL_CODE = ?, ADDR_LOCALITY_NAME = ?, ADDR_COUNTRY_CODE = ?, UPDATED_TIME = ? WHERE DD_UUID = ?]
-
-java.lang.RuntimeException: org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [UPDATE DD_ACCOUNT_TBL SET EVENT_ID = eventId, ADDR_STREET_NAME = ?, ADDR_HOUSE_NUMBER = ?, ADDR_BOX_NUMBER = ?, ADDR_POSTAL_CODE = ?, ADDR_LOCALITY_NAME = ?, ADDR_COUNTRY_CODE = ?, UPDATED_TIME = ? WHERE DD_UUID = ?]
-        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:84) ~[classes/:na]
-        at com.ing.datadist.api.service.OrganisationUnitService.lambda$processOrganisationUnit$1(OrganisationUnitService.java:156) ~[classes/:na]
-        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
-        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[na:na]
-        at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[na:na]
-Caused by: org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [UPDATE DD_ACCOUNT_TBL SET EVENT_ID = eventId, ADDR_STREET_NAME = ?, ADDR_HOUSE_NUMBER = ?, ADDR_BOX_NUMBER = ?, ADDR_POSTAL_CODE = ?, ADDR_LOCALITY_NAME = ?, ADDR_COUNTRY_CODE = ?, UPDATED_TIME = ? WHERE DD_UUID = ?]
-        at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:103) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:107) ~[spring-jdbc-6.2.8.jar:6.2.8]        
-        at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1556) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:677) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:972) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1016) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1026) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at com.ing.datadist.api.repository.AccountingDAO.insertPostalAddress(AccountingDAO.java:196) ~[classes/:na]
-        at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
-        at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
-        at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:138) ~[spring-tx-6.2.8.jar:6.2.8]      
-        at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.2.8.jar:6.2.8]
-        at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728) ~[spring-aop-6.2.8.jar:6.2.8]
-        at com.ing.datadist.api.repository.AccountingDAO$$SpringCGLIB$$0.insertPostalAddress(<generated>) ~[classes/:na]
-        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:80) ~[classes/:na]
-        ... 8 common frames omitted
-Caused by: java.sql.SQLSyntaxErrorException: ORA-00904: "EVENTID": invalid identifier
-
-https://docs.oracle.com/error-help/db/ora-00904/
-        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:715) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:615) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4C8Oall.processError(T4C8Oall.java:1372) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:972) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:237) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4C8Oall.doOALL(T4C8Oall.java:524) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CPreparedStatement.doOall8(T4CPreparedStatement.java:298) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.T4CPreparedStatement.executeForRows(T4CPreparedStatement.java:1510) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OracleStatement.executeSQLStatement(OracleStatement.java:2020) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OracleStatement.doExecuteWithTimeout(OracleStatement.java:1633) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.executeInternal(OraclePreparedStatement.java:3973) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.doExecuteLargeUpdate(OraclePreparedStatement.java:4339) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.executeLargeUpdate(OraclePreparedStatement.java:4316) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatement.executeUpdate(OraclePreparedStatement.java:4291) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at oracle.jdbc.driver.OraclePreparedStatementWrapper.executeUpdate(OraclePreparedStatementWrapper.java:1007) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeUpdate(ProxyPreparedStatement.java:61) ~[HikariCP-6.3.0.jar:na]
-        at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeUpdate(HikariProxyPreparedStatement.java) ~[HikariCP-6.3.0.jar:na]
-        at org.springframework.jdbc.core.JdbcTemplate.lambda$update$2(JdbcTemplate.java:977) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:658) ~[spring-jdbc-6.2.8.jar:6.2.8]
-        ... 22 common frames omitted
-Caused by: oracle.jdbc.OracleDatabaseException: ORA-00904: "EVENTID": invalid identifier
-
-        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:723) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
-        ... 40 common frames omitted
-
-2025-12-01T16:31:26.430+05:30 DEBUG 22268 --- [Integration-Module] [gle/netty4-1-14] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [803908506] to request [443570882:
-None] from instance [Inet(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.6:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
+2025-12-01T16:39:25.676+05:30 DEBUG 13328 --- [Integration-Module] [gle/netty4-1-12] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [1824714053] to request [139173315
+0:Some(aef1c257789c8217:ecbd6287fbb43ab81b144e97af5d7bda)] from instance [Inet(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.10:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,InvolvedPartyAPI)))] with contents
 HTTP/1.1 200 OK
-Date: Mon, 01 Dec 2025 11:01:25 GMT
+Date: Mon, 01 Dec 2025 11:09:24 GMT
 Pragma: no-cache
-traceparent: 00-432c48ab0069152733ba93fc363c4cd5-241994c1a1e44bba-01
+traceparent: 00-ecbd6287fbb43ab81b144e97af5d7bda-4455019e3fab05fb-01
 Content-Type: application/json
 Cache-Control: no-store
-Content-Length: 1223
+Content-Length: 585
 
 {
-  "organisationUnit" : {
-    "involvedPartyIdentifier" : "8977c4cf-bebf-45b3-980f-947e546dfeb4",
-    "involvedPartyType" : "OU",
+  "involvedPartyExternalIdentifier" : {
+    "involvedPartyExternalIdentifierType" : "KBO_BE",
+    "involvedPartyExternalIdentifierValue" : "46ab69ff-bec2-432f-8884-cc356070a368",
+    "placeOfIssue" : "Hyderabad",
     "dataSource" : "FOS_IT",
-    "logicalDataDomain" : "ING_BE_EXT_DATA",
-    "preferredLanguage" : "fr",
-    "channelOfEntry" : "MOB_CHAN",
-    "organisationUnitStructureType" : "MAND_USR_GRP",
-    "effectiveDate" : "2025-12-01T11:01:25.510Z",
-    "dateCreated" : "2025-12-01T11:01:25.515Z",
+    "effectiveDate" : "2025-12-01T11:06:28.000Z",
+    "endDate" : "2035-12-01T11:06:28.000Z",
     "lastUpdateUser" : "IN_ADMIN",
-    "lastUpdateDate" : "2025-12-01T11:01:25.517Z",
-    "involvedPartyInternalIdentifiers" : [ {
-      "involvedPartyInternalIdentifierType" : "UUID",
-      "involvedPartyInternalIdentifierValue" : "8977c4cf-bebf-45b3-980f-947e546dfeb4",
-      "lastUpdateUser" : "IN_ADMIN",
-      "lastUpdateDate" : "2025-12-01T11:01:25.530Z"
-    } ],
-    "organisationUnitNames" : [ {
-      "organisationUnitNameType" : "OU_NM",
-      "organisationUnitName" : "BALA CORPORATION",
-      "effectiveDate" : "2025-12-01T11:01:25.510Z",
-      "lastUpdateUser" : "IN_ADMIN",
-      "lastUpdateDate" : "2025-12-01T11:01:25.519Z"
-    } ],
-    "_links" : {
-      "self" : {
-        "href" : "https://apis.ing.com/v5/involved-parties/8977c4cf-bebf-45b3-980f-947e546dfeb4"
-      }
+    "lastUpdateDate" : "2025-12-01T11:09:24.772Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/external-identifiers"
     }
   }
 }
-2025-12-01T16:31:26.432+05:30  INFO 22268 --- [Integration-Module] [gle/netty4-1-14] c.i.d.api.service.OnePamRepository       : createInvolvedParty response: Response("HTTP/1.1 Status(200)")
-2025-12-01T16:31:26.441+05:30  INFO 22268 --- [Integration-Module] [   scheduling-1] c.i.d.api.repository.AccountingDAO       : Inserted organisation unit record: UUID=8977c4cf-bebf-45b3-980f-947e546dfeb4, EVENT_ID=null, ORG_NAME=BALA CORPORATION
-2025-12-01T16:31:26.441+05:30  INFO 22268 --- [Integration-Module] [   scheduling-1] c.i.d.a.service.OrganisationUnitService  : Involved Party Internal Identifiers : 8977c4cf-bebf-45b3-980f-947e546dfeb4
-2025-12-01T16:31:26.442+05:30 DEBUG 22268 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Demo_28_Nov_API Start of fetchByOrgNumber
-2025-12-01T16:31:26.442+05:30 DEBUG 22268 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetching organisation unit config for Org Number: '46ab69ff-bec2-432f-8884-cc356070a368'
-2025-12-01T16:31:26.455+05:30 DEBUG 22268 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetched 0 record(s) from DD_COFACEOPS_TBL by Org Number
-2025-12-01T16:31:26.455+05:30 DEBUG 22268 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : End of fetchByOrgNumber
-2025-12-01T16:31:26.456+05:30  INFO 22268 --- [Integration-Module] [   scheduling-1] c.i.d.a.service.OrganisationUnitService  : final uuid: 8977c4cf-bebf-45b3-980f-947e546dfeb4    
-2025-12-01T16:31:26.461+05:30  INFO 22268 --- [Integration-Module] [onPool-worker-7] c.i.d.api.repository.AccountingDAO       : Updated external ID for UUID=8977c4cf-bebf-45b3-980f-947e546dfeb4
-2025-12-01T16:31:26.473+05:30  INFO 22268 --- [Integration-Module] [onPool-worker-2] c.i.datadist.api.service.AddressService  : Calling OnePAM with request: CreatePostalAddressRequest(postalAddressUsageType=BSN_ADR, countryCode=BE, cityName=, streetName=, houseNumber=, houseNumberAddition=, postalCode=, dataSource=null, effectiveDate=null, endDate=null)     
-2025-12-01T16:31:26.473+05:30  INFO 22268 --- [Integration-Module] [onPool-worker-2] c.i.d.api.service.OnePamRepository       : createPostalAddress request payload: CreatePostalAdd
-ressRequest(postalAddressUsageType=BSN_ADR, countryCode=BE, cityName=, streetName=, houseNumber=, houseNumberAddition=, postalCode=, dataSource=null, effectiveDate=null, endDate=null)
-2025-12-01T16:31:26.474+05:30  INFO 22268 --- [Integration-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-
-@Service
-@Slf4j
-public class AddressService {
-
-    private final OnePamRepository repository;
-    private final AccountingDAO accountingDAO;
-
-    public AddressService(OnePamRepository repository, AccountingDAO accountingDAO) {
-        this.repository = repository;
-        this.accountingDAO = accountingDAO;
+2025-12-01T16:39:25.676+05:30 DEBUG 13328 --- [Integration-Module] [gle/netty4-1-40] c.i.d.api.service.OnePamRepository       : createPostalAddress response body: {
+  "postalAddress" : {
+    "postalAddressUsageType" : "BSN_ADR",
+    "countryCode" : "BE",
+    "lastUpdateUser" : "X-ING-LastUpdateUser",
+    "lastUpdateDate" : "2025-12-01T11:09:24.775Z",
+    "effectiveDate" : "2025-12-01T11:09:24.718Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/postal-addresses"
     }
-
-    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
-        log.info("Calling OnePAM with request: {}", request);
-
-        // call repository (returns wrapper)
-        CreatePostalAddressResponse wrapper = repository.createPostalAddress(uuid, request).join();
-
-        if (wrapper == null) {
-            log.warn("OnePAM returned null wrapper for uuid={}", uuid);
-            return null;
-        }
-
-        PostalAddressResponse postalAddress = wrapper.getPostalAddress();
-        if (postalAddress == null) {
-            log.warn("OnePAM returned no postalAddress body for uuid={}", uuid);
-            return null;
-        }
-
-        // Fallback: if OnePAM returned empty fields, keep original request values.
-        if (isBlank(postalAddress.getStreetName()) && !isBlank(request.getStreetName())) {
-            postalAddress.setStreetName(request.getStreetName());
-        }
-        if (isBlank(postalAddress.getHouseNumber()) && !isBlank(request.getHouseNumber())) {
-            postalAddress.setHouseNumber(request.getHouseNumber());
-        }
-        if (isBlank(postalAddress.getHouseNumberAddition()) && !isBlank(request.getHouseNumberAddition())) {
-            postalAddress.setHouseNumberAddition(request.getHouseNumberAddition());
-        }
-        if (isBlank(postalAddress.getPostalCode()) && !isBlank(request.getPostalCode())) {
-            postalAddress.setPostalCode(request.getPostalCode());
-        }
-        if (isBlank(postalAddress.getCityName()) && !isBlank(request.getCityName())) {
-            postalAddress.setCityName(request.getCityName());
-        }
-        if (isBlank(postalAddress.getCountryCode()) && !isBlank(request.getCountryCode())) {
-            postalAddress.setCountryCode(request.getCountryCode());
-        }
-
-        log.info("Final address for DB insert: {}", postalAddress);
-
-        // Parse effectiveDate (ISO8601 string) safely into Timestamp
-        Timestamp effectiveTimestamp = null;
-        try {
-            if (!isBlank(postalAddress.getEffectiveDate())) {
-                Instant instant = Instant.parse(postalAddress.getEffectiveDate());
-                effectiveTimestamp = Timestamp.from(instant);
-            }
-        } catch (Exception e) {
-            log.warn("Unable to parse effectiveDate '{}' for uuid={}, will use current time. Error: {}",
-                    postalAddress.getEffectiveDate(), uuid, e.getMessage());
-            effectiveTimestamp = new Timestamp(System.currentTimeMillis());
-        }
-
-        try {
-            accountingDAO.insertPostalAddress(uuid, postalAddress, effectiveTimestamp);
-            log.info("Postal address inserted/updated for UUID={}", uuid);
-        } catch (Exception e) {
-            log.error("Failed to persist postal address for UUID={} : {}", uuid, e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-
-        return postalAddress;
-    }
-
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
-    }
+  }
 }
 
+accc-tbl
+DD_UUID	VARCHAR2(50 CHAR)	No		1	
+EVENT_ID	VARCHAR2(50 CHAR)	No		2	
+TYP_OF_ENTY	VARCHAR2(10 BYTE)	Yes		3	
+FIRST_NAME	VARCHAR2(255 CHAR)	Yes		4	
+LAST_NAME	VARCHAR2(255 CHAR)	Yes		5	
+BIRTH_DATE	DATE	Yes		6	
+BIRTH_LOCALITY	VARCHAR2(255 CHAR)	Yes		7	
+BIRTH_COUNTRY	VARCHAR2(255 CHAR)	Yes		8	
+ADDR_STREET_NAME	VARCHAR2(64 BYTE)	Yes		9	
+ADDR_HOUSE_NUMBER	VARCHAR2(10 BYTE)	Yes		10	
+ADDR_BOX_NUMBER	VARCHAR2(10 BYTE)	Yes		11	
+ADDR_POSTAL_CODE	VARCHAR2(20 BYTE)	Yes		12	
+ADDR_LOCALITY_NAME	VARCHAR2(50 BYTE)	Yes		13	
+ADDR_COUNTRY_CODE	VARCHAR2(10 CHAR)	Yes		14	
+ORG_NUMBER	VARCHAR2(255 CHAR)	Yes		15	
+UPDATED_TIME	TIMESTAMP(6)	Yes		16	
+DIGITAL_ADDRESS	VARCHAR2(255 CHAR)	Yes		17	
 
 
 
 
-public void insertPostalAddress(String uuid, PostalAddressResponse adr, Timestamp effectiveTimestamp) {
-    if (uuid == null || uuid.trim().isEmpty()) {
-        log.warn("insertPostalAddress called with empty uuid, skipping");
-        return;
-    }
-String eventId = "null";
-        ;
-    Timestamp ts = effectiveTimestamp != null ? effectiveTimestamp : new Timestamp(System.currentTimeMillis());
+cofaceops-tbl
+OPS_UUID	VARCHAR2(50 CHAR)	Yes		1	
+OPS_NUMBER	VARCHAR2(50 CHAR)	Yes		2	
+OPS_ORGANISATIONUNITNAME	VARCHAR2(255 CHAR)	Yes		3	
+ADR_POSTALADDRESS_STREETNM	VARCHAR2(255 CHAR)	Yes		4	
+ADR_POSTALADDRESS_HOUSENUM	VARCHAR2(255 CHAR)	Yes		5	
+ADR_POSTALADDRESS_HOUSEADD	VARCHAR2(255 CHAR)	Yes		6	
+ADR_POSTALADDRESS_POSTALCD	VARCHAR2(64 BYTE)	Yes		7	
+ADR_POSTALADDRESS_CITYNAME	VARCHAR2(50 BYTE)	Yes		8	
+ADR_POSTALADDRESS_CNTRYCD	VARCHAR2(50 BYTE)	Yes		9	
+OPS_EXTID_DATEOFISSUE	VARCHAR2(50 BYTE)	Yes		10	
+OPS_EXTID_EXPIRYDATE	VARCHAR2(50 BYTE)	Yes		11	
+ADR_DIGITALADDR_FULLTEL	VARCHAR2(50 BYTE)	Yes		12	
+ADR_DIGITALADDR_FULLTELFGN	VARCHAR2(50 BYTE)	Yes		13	
+ADR_DIGITALADDR_EMAIL	VARCHAR2(50 BYTE)	Yes		14	
+ORG_NUMBER	VARCHAR2(255 CHAR)	Yes		15	
+ORG_UUID	VARCHAR2(50 CHAR)	Yes		16	
 
-    // try update first
-    String updateSql = "UPDATE DD_ACCOUNT_TBL SET " +
-            "EVENT_ID = eventId, " +
-            "ADDR_STREET_NAME = ?, " +
-            "ADDR_HOUSE_NUMBER = ?, " +
-            "ADDR_BOX_NUMBER = ?, " +
-            "ADDR_POSTAL_CODE = ?, " +
-            "ADDR_LOCALITY_NAME = ?, " +
-            "ADDR_COUNTRY_CODE = ?, " +
-            "UPDATED_TIME = ? " +
-            "WHERE DD_UUID = ?";
 
-    int updated = jdbcTemplate.update(updateSql,
-            adr.getStreetName(),
-            adr.getHouseNumber(),
-            adr.getHouseNumberAddition(),
-            adr.getPostalCode(),
-            adr.getCityName(),
-            adr.getCountryCode(),
-            ts,
-            uuid);
 
-    if (updated > 0) {
-        log.info("Updated postal address row for UUID={}", uuid);
-        return;
-    }
 
-    // if update affected 0 rows -> insert
-    String insertSql = "INSERT INTO DD_ACCOUNT_TBL (" +
-            "DD_UUID, EVENT_ID ,ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, " +
-            "ADDR_POSTAL_CODE, ADDR_LOCALITY_NAME, ADDR_COUNTRY_CODE, UPDATED_TIME" +
-            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    jdbcTemplate.update(insertSql,
-            uuid,
-            eventId,
-            adr.getStreetName(),
-            adr.getHouseNumber(),
-            adr.getHouseNumberAddition(),
-            adr.getPostalCode(),
-            adr.getCityName(),
-            adr.getCountryCode(),
-            ts);
-
-    log.info("Inserted postal address row for UUID={}", uuid);
-}
-
+now opsuuid = dduid
+so here lets fetch fields from coface ops tbl for postal addr and fill into acctbl and send in response as well

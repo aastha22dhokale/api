@@ -1,58 +1,201 @@
-package com.ing.datadist.configreader;
+package com.ing.datadist.api.service;
 
 import com.ing.datadist.api.model.CofaceTableAddress;
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.CreatePostalAddressResponse;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import com.ing.datadist.api.repository.AccountingDAO;
+import com.ing.datadist.configreader.CofaceOpsConfigReader;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.springframework.stereotype.Service;
 
-@Repository
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+@Service
+
 @Slf4j
-public class CofaceOpsConfigReader {
 
-    private static final String FETCH_BY_ORG_NUMBER_SQL =
-            "SELECT OPS_ORGANISATIONUNITNAME, ORG_NUMBER, ADR_POSTALADDRESS_CNTRYCD, " +
-                    "ADR_POSTALADDRESS_STREETNM, ADR_POSTALADDRESS_HOUSENUM, ADR_POSTALADDRESS_HOUSEADD, " +
-                    "ADR_POSTALADDRESS_POSTALCD, ADR_POSTALADDRESS_CITYNAME, " +
-                    "OPS_EXTID_DATEOFISSUE, OPS_EXTID_EXPIRYDATE, OPS_UUID, " +
-                    "ADR_DIGITALADDR_EMAIL " +
-                    "FROM DD_COFACEOPS_TBL WHERE ORG_NUMBER = ?";
+public class AddressService {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final OnePamRepository repository;
 
-    @Autowired
-    public CofaceOpsConfigReader(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private final AccountingDAO accountingDAO;
+
+    private final CofaceOpsConfigReader configReader;
+
+    public AddressService(OnePamRepository repository,
+
+                          AccountingDAO accountingDAO,
+
+                          CofaceOpsConfigReader configReader) {
+
+        this.repository = repository;
+
+        this.accountingDAO = accountingDAO;
+
+        this.configReader = configReader;
+
     }
 
-    public List<Map<String, String>> fetchByOrgNumber(String orgNumber) {
-        log.debug("Demo_28_Nov_API Start of fetchByOrgNumber");
-        log.debug("Fetching organisation unit config for Org Number: '{}'", orgNumber);
+    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
 
-        List<Map<String, String>> results = jdbcTemplate.query(
-                FETCH_BY_ORG_NUMBER_SQL,
-                new Object[]{orgNumber},
-                new OrganisationUnitRowMapper()
+        log.info("Calling OnePAM with request={}", request);
+
+        CreatePostalAddressResponse wrapper = repository.createPostalAddress(uuid, request).join();
+
+        PostalAddressResponse pam = wrapper.getPostalAddress();
+
+        log.info("Received from OnePAM postalAddress={}", pam);
+
+        // ====== FETCH OPS DATA USING ONLY THIS METHOD ======
+
+        Map<String, String> ops = null;
+
+        try {
+
+            ops = configReader.fetchAddressDetails(uuid);
+
+            log.info("Fetched OPS address details={}", ops);
+
+        } catch (Exception ex) {
+
+            log.warn("No OPS address found for UUID={}, proceeding with PAM only", uuid);
+
+        }
+
+        // ====== MERGE PAM + OPS ======
+
+        PostalAddressResponse merged = PostalAddressResponse.builder()
+
+                .postalAddressUsageType(pam.getPostalAddressUsageType())
+
+                .effectiveDate(pam.getEffectiveDate())
+
+                .endDate(pam.getEndDate())
+
+                .streetName(firstNonBlank(pam.getStreetName(), ops != null ? ops.get("street") : null))
+
+                .houseNumber(pam.getHouseNumber())  // OPS does not have it
+
+                .houseNumberAddition(pam.getHouseNumberAddition()) // OPS does not have it
+
+                .postalCode(firstNonBlank(pam.getPostalCode(), ops != null ? ops.get("postalCode") : null))
+
+                .cityName(firstNonBlank(pam.getCityName(), ops != null ? ops.get("city") : null))
+
+                .countryCode(firstNonBlank(pam.getCountryCode(), ops != null ? ops.get("country") : null))
+
+                .build();
+
+        log.info("Merged postal address={}", merged);
+
+        // ====== TIMESTAMP PARSE FIX ======
+
+        Timestamp ts = null;
+
+        try {
+
+            ts = pam.getEffectiveDate() != null
+
+                    ? Timestamp.from(Instant.parse(pam.getEffectiveDate()))
+
+                    : Timestamp.from(Instant.now());
+
+        } catch (Exception e) {
+
+            log.warn("Invalid PAM effectiveDate format, using now()");
+
+            ts = Timestamp.from(Instant.now());
+
+        }
+
+        // ====== INSERT INTO ACCOUNTING TABLE ======
+
+        String adr
+        accountingDAO.insertPostalAddress(
+
+                uuid,
+                ts,
+                adr);
+        adr = merged.getStreetName();
+        merged.getHouseNumber(),
+                merged.getHouseNumberAddition(),
+                merged.getPostalCode(),
+                merged.getCityName(),
+                merged.getCountryCode(),
+
         );
 
-        log.debug("Fetched {} record(s) from DD_COFACEOPS_TBL by Org Number", results.size());
-        results.forEach(row -> log.debug("Row: {}", row));
-        log.debug("End of fetchByOrgNumber");
-        return results;
+        log.info("Inserted merged postal address into Accounting table for UUID={}", uuid);
+
+        return merged;
+
     }
-    public Map<String, String> fetchAddressDetails(String uuid) {
-        String sql = "SELECT ADR_POSTALADDRESS_STREETNM, ADR_POSTALADDRESS_CITYNAME, " +
-                "ADR_POSTALADDRESS_POSTALCD, OPS_ORGANISATIONUNITNAME, ADR_POSTALADDRESS_CNTRYCD " +
-                "FROM DD_COFACEOPS_TBL WHERE OPS_UUID = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{uuid}, (rs, rowNum) -> {
-            Map<String, String> result = new HashMap<>();
-            result.put("street", rs.getString("ADR_POSTALADDRESS_STREETNM"));
-            result.put("city", rs.getString("ADR_POSTALADDRESS_CITYNAME"));
-            result.put("postalCode", rs.getString("ADR_POSTALADDRESS_POSTALCD"));
-            result.put("country", rs.getString("ADR_POSTALADDRESS_CNTRYCD"));
-            return result;
-        });
+
+    private String firstNonBlank(String a, String b) {
+
+        return (a != null && !a.isBlank()) ? a : b;
+
+    }
+
+}
+
+
+
+
+    public void insertPostalAddress(String uuid, PostalAddressResponse adr, Timestamp ts) {
+
+        if (uuid == null || uuid.isEmpty()) return;
+
+        String eventId = "null";
+
+        // Try UPDATE first
+        String updateSql = "UPDATE DD_ACCOUNT_TBL SET " +
+                "EVENT_ID = ?, " +
+                "ADDR_STREET_NAME = ?, " +
+                "ADDR_HOUSE_NUMBER = ?, " +
+                "ADDR_BOX_NUMBER = ?, " +
+                "ADDR_POSTAL_CODE = ?, " +
+                "ADDR_LOCALITY_NAME = ?, " +
+                "ADDR_COUNTRY_CODE = ?, " +
+                "UPDATED_TIME = ? " +
+                "WHERE DD_UUID = ?";
+
+        int rows = jdbcTemplate.update(updateSql,
+                eventId,
+                adr.getStreetName(),
+                adr.getHouseNumber(),
+                adr.getHouseNumberAddition(),
+                adr.getPostalCode(),
+                adr.getCityName(),
+                adr.getCountryCode(),
+                ts,
+                uuid);
+
+        if (rows > 0) {
+            log.info("Updated postal address for UUID={}", uuid);
+            return;
+        }
+
+        // INSERT if no row existed
+        String insertSql = "INSERT INTO DD_ACCOUNT_TBL (" +
+                "DD_UUID, EVENT_ID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, " +
+                "ADDR_POSTAL_CODE, ADDR_LOCALITY_NAME, ADDR_COUNTRY_CODE, UPDATED_TIME" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        jdbcTemplate.update(insertSql,
+                uuid,
+                eventId,
+                adr.getStreetName(),
+                adr.getHouseNumber(),
+                adr.getHouseNumberAddition(),
+                adr.getPostalCode(),
+                adr.getCityName(),
+                adr.getCountryCode(),
+                ts
+        );
+
+        log.info("Inserted postal address for UUID={}", uuid);
     }

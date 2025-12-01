@@ -1,17 +1,128 @@
-DD_UUID	VARCHAR2(50 CHAR)	No		1	
-EVENT_ID	VARCHAR2(50 CHAR)	No		2	
-TYP_OF_ENTY	VARCHAR2(10 BYTE)	Yes		3	
-FIRST_NAME	VARCHAR2(255 CHAR)	Yes		4	
-LAST_NAME	VARCHAR2(255 CHAR)	Yes		5	
-BIRTH_DATE	DATE	Yes		6	
-BIRTH_LOCALITY	VARCHAR2(255 CHAR)	Yes		7	
-BIRTH_COUNTRY	VARCHAR2(255 CHAR)	Yes		8	
-ADDR_STREET_NAME	VARCHAR2(64 BYTE)	Yes		9	
-ADDR_HOUSE_NUMBER	VARCHAR2(10 BYTE)	Yes		10	
-ADDR_BOX_NUMBER	VARCHAR2(10 BYTE)	Yes		11	
-ADDR_POSTAL_CODE	VARCHAR2(20 BYTE)	Yes		12	
-ADDR_LOCALITY_NAME	VARCHAR2(50 BYTE)	Yes		13	
-ADDR_COUNTRY_CODE	VARCHAR2(10 CHAR)	Yes		14	
-ORG_NUMBER	VARCHAR2(255 CHAR)	Yes		15	
-UPDATED_TIME	TIMESTAMP(6)	Yes		16	
-DIGITAL_ADDRESS	VARCHAR2(255 CHAR)	Yes		17	
+1 
+ DHOKALE, A. (Aastha) 
+API & Stream Marketplace
+Home
+APIs
+Topics
+Useful links
+Subscribe
+OpenApiDocument P00007 OAS 3
+Involved Party API
+
+Share
+View in Console
+Back to API details
+Create a postal address for the party identified by the uuid.
+post
+/v5/involved-parties/{uuid}/postal-addresses
+
+🏷️ PostalAddresses
+
+Creates a current postal address for the party identified by the uuid. Only one current Postal Address per postalAddressUsageType maybe created.
+
+Creates a future postal address for the party identified by the uuid, when the party already has a current postal address with the same postalAddressUsageType. Only one future Postal Address per postalAddressUsageType maybe created. The endDate of a future postal address must be empty, and the effectiveDate must be greater than the endDate of the current postal address with the same usage type. The current postal address must have an endDate set in order to be able to create the future postal address.
+
+header params
+X-ING-LastUpdateUser string required
+The LastUpdateUser
+
+path params
+uuid string required
+UUID of an Involved Party.
+
+Request body (required)
+The body should contain all the mandatory attributes of an postal address.
+
+
+application/json
+
+Schema
+Examples
+This example has been generated based on the body schema.
+
+{
+  "postalAddressUsageType": "STD",
+  "countryCode": "BE",
+  "countryRegionCode": "BE-BRU",
+  "districtName": "Zuidoost",
+  "cityName": "Brussels",
+  "cityAreaName": "Fratton",
+  "regionName": "Brussels",
+  "postalCode": "1001AB",
+  "streetName": "Rue Royale",
+  "houseNumber": "100",
+  "houseNumberAddition": "C",
+  "buildingName": "HeadOffice",
+  "deliveryInformation": "Watch out for the dog",
+  "floor": "5",
+  "locationUnitNumber": "910",
+  "departmentName": "Retail Department",
+  "subdepartmentName": "Electronics",
+  "poBoxNumber": "112233",
+  "streetType": "FR_BOULEVARD",
+  "unstructuredAddressLine1": "string",
+  "unstructuredAddressLine2": "string",
+  "unstructuredAddressLine3": "string",
+  "dataSource": "FOS_IT",
+  "effectiveDate": "2020-10-10T10:11:12.345+02:00",
+  "lastVerificationDate": "2023-05-03T10:11:12.999Z",
+  "endDate": "2050-12-12T23:59:59.999+02:00",
+  "deliveryFailureReasonType": "ADR_NOT_EXST"
+}
+
+Responses
+
+200
+
+400
+
+404
+
+500
+200 OK
+
+
+application/json
+
+Schema
+Examples
+This example has been generated based on the body schema.
+
+{
+  "postalAddress": {
+    "postalAddressUsageType": "RSDNT_ADR",
+    "countryCode": "IT",
+    "countryRegionCode": "IT-RM",
+    "districtName": "Zuidoost",
+    "cityName": "ROMA",
+    "cityAreaName": "Fratton",
+    "regionName": "Greater New York",
+    "postalCode": "808",
+    "streetName": "Rodeo Drive",
+    "houseNumber": "123",
+    "houseNumberAddition": "A",
+    "buildingName": "White House",
+    "deliveryInformation": "Watch out for the angry dog",
+    "floor": "5",
+    "locationUnitNumber": "910",
+    "departmentName": "Retail department",
+    "subdepartmentName": "Electronics",
+    "poBoxNumber": "123",
+    "streetType": "ES_CALLE",
+    "unstructuredAddressLine1": "Tempura Road",
+    "unstructuredAddressLine2": "Big house on the hill",
+    "unstructuredAddressLine3": "Third house from the right",
+    "deliveryFailureReasonType": "ADR_NOT_EXST",
+    "dataSource": "FOS_IT",
+    "lastUpdateUser": "OnePam",
+    "lastUpdateDate": "2021-04-27T09:11:11.111Z",
+    "effectiveDate": "2020-10-10T08:11:12.345Z",
+    "lastVerificationDate": "2023-05-03T10:11:12.999Z",
+    "endDate": "2050-12-12T21:59:59.999Z"
+  },
+  "_links": {
+    "self": {
+      "href": "https://(hostname):(port)/v5/involved-parties/a15f4243-e38b-4d96-af99-9c40c8dd08ab/post-addresses"
+    }
+  }
+}

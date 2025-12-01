@@ -1,128 +1,185 @@
+Got it — now the requirement is crystal clear:
 
-{"postalAddressUsageType":"BSN_ADR","countryCode":"BE","cityName":"","streetName":"","houseNumber":"","houseNumberAddition":"","postalCode":""}
-2025-12-01T16:39:25.459+05:30  INFO 13328 --- [Integration-Module] [   scheduling-1] o.s.batch.core.step.AbstractStep         : Step: [searchApiCallTaskletStep] executed in 24s458ms
-2025-12-01T16:39:25.459+05:30 DEBUG 13328 --- [Integration-Module] [onPool-worker-1] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Sending request [1391733150:aef1c257789c8217:ecbd628
-7fbb43ab81b144e97af5d7bda] to instance [Inet(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.10:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,InvolvedPartyAPI)))] with contents
-POST /v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/external-identifiers HTTP/1.1
-Host: apis.ing.com
-traceparent: 00-ecbd6287fbb43ab81b144e97af5d7bda-aef1c257789c8217-01
-X-B3-SpanId: 7712477692ce9d99
-Content-Type: application/json;charset=UTF-8
-X-B3-TraceId: 7712477692ce9d99
-uber-trace-id: ecbd6287fbb43ab81b144e97af5d7bda:aef1c257789c8217:0:1
-Content-Length: 247   
-2025-12-01T16:39:25.501+05:30  INFO 13328 --- [Integration-Module] [   scheduling-1] c.i.d.batch.schedular.BatchSchedular     : Batch Schedular finished name:organisationUnitEnrichmentJob status:COMPLETED
-2025-12-01T16:39:25.614+05:30  WARN 13328 --- [Integration-Module] [ntainer#3-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-onepam_test_group_local-
-005-5, groupId=onepam_test_group_local-005] The metadata response from the cluster reported a recoverable issue with correlation id 73 : {ingbenotifyexternalpartyinternalidentifier5topic=UNKNOWN_TOPIC_OR_PARTITION}
-2025-12-01T16:39:25.674+05:30 DEBUG 13328 --- [Integration-Module] [gle/netty4-1-40] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [411341336] to request [1283718403
-:Some(cf88db4087062528:eabf2c28066628362a5e49d5ccfb6722)] from instance [Inet(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.11:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
-HTTP/1.1 200 OK
-Date: Mon, 01 Dec 2025 11:09:24 GMT
-Pragma: no-cache
-traceparent: 00-eabf2c28066628362a5e49d5ccfb6722-9532124b0d3fdca5-01
-Content-Type: application/json
-Cache-Control: no-store
-Content-Length: 397
+✅ Requirement
+
+When OnePAM createPostalAddress returns only:
 
 {
-  "postalAddress" : {
-    "postalAddressUsageType" : "BSN_ADR",
-    "countryCode" : "BE",
-    "lastUpdateUser" : "X-ING-LastUpdateUser",
-    "lastUpdateDate" : "2025-12-01T11:09:24.775Z",
-    "effectiveDate" : "2025-12-01T11:09:24.718Z"
-  },
-  "_links" : {
-    "self" : {
-      "href" : "https://apis.ing.com/v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/postal-addresses"
-    }
-  }
+  "postalAddressUsageType":"BSN_ADR",
+  "countryCode":"BE"
 }
-2025-12-01T16:39:25.676+05:30 DEBUG 13328 --- [Integration-Module] [gle/netty4-1-12] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [1824714053] to request [139173315
-0:Some(aef1c257789c8217:ecbd6287fbb43ab81b144e97af5d7bda)] from instance [Inet(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.10:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,InvolvedPartyAPI)))] with contents
-HTTP/1.1 200 OK
-Date: Mon, 01 Dec 2025 11:09:24 GMT
-Pragma: no-cache
-traceparent: 00-ecbd6287fbb43ab81b144e97af5d7bda-4455019e3fab05fb-01
-Content-Type: application/json
-Cache-Control: no-store
-Content-Length: 585
+
+…and all the actual postal fields remain empty (streetName = "", cityName = "", postalCode = "" etc),
+
+👉 You want to fetch the missing postal address fields from CofaceOps table
+
+(using OPS_UUID = DD_UUID)
+
+…and then:
+
+1. Fill those fields into the Accounting Table entry
+
+2. Send those fields in your final response
+
+3. So Accounting Table always contains correct complete postal address
+
+This is correct design, because FACT/OnePAM does not return full address after creation.
+
+⸻
+
+✅ WHERE FIELDS SHOULD COME FROM
+
+✔︎ OnePAM returns:
+	•	usageType
+	•	effectiveDate
+	•	countryCode
+	•	endDate
+
+✔︎ Request body may be empty (in your case)
+
+✔︎ CofaceOps has the actual correct postal address:
+
+From your table:
+
+Field	CofaceOps Column
+streetName	ADR_POSTALADDRESS_STREETNM
+houseNumber	ADR_POSTALADDRESS_HOUSENUM
+houseNumberAddition (box)	ADR_POSTALADDRESS_HOUSEADD
+postalCode	ADR_POSTALADDRESS_POSTALCD
+cityName	ADR_POSTALADDRESS_CITYNAME
+countryCode	ADR_POSTALADDRESS_CNTRYCD
+
+
+⸻
+
+🚀 FULL FIX (END-TO-END)
+
+STEP 1 — Add method in MappingDAO / CofaceOpsDAO
+
+public CofaceOpsAddress getPostalAddressByOpsUuid(String opsUuid) {
+    String sql = "SELECT ADR_POSTALADDRESS_STREETNM, ADR_POSTALADDRESS_HOUSENUM, " +
+                 "ADR_POSTALADDRESS_HOUSEADD, ADR_POSTALADDRESS_POSTALCD, " +
+                 "ADR_POSTALADDRESS_CITYNAME, ADR_POSTALADDRESS_CNTRYCD " +
+                 "FROM COFACE_OPS_TBL WHERE OPS_UUID = ?";
+
+    return jdbcTemplate.queryForObject(sql, (rs, rowNum) ->
+        CofaceOpsAddress.builder()
+            .streetName(rs.getString("ADR_POSTALADDRESS_STREETNM"))
+            .houseNumber(rs.getString("ADR_POSTALADDRESS_HOUSENUM"))
+            .houseAddition(rs.getString("ADR_POSTALADDRESS_HOUSEADD"))
+            .postalCode(rs.getString("ADR_POSTALADDRESS_POSTALCD"))
+            .cityName(rs.getString("ADR_POSTALADDRESS_CITYNAME"))
+            .countryCode(rs.getString("ADR_POSTALADDRESS_CNTRYCD"))
+            .build()
+    , opsUuid);
+}
+
+
+⸻
+
+STEP 2 — In AddressService, MERGE values
+
+CofaceOpsAddress opsAddress = mappingDAO.getPostalAddressByOpsUuid(ddUuid);
+
+PostalAddressResponse merged = PostalAddressResponse.builder()
+    .postalAddressUsageType(onePamResponse.getUsageType())
+    .effectiveDate(onePamResponse.getEffectiveDate())
+    .endDate(null)
+
+    // Take from CofaceOps (Not from OnePAM)
+    .streetName(opsAddress.getStreetName())
+    .houseNumber(opsAddress.getHouseNumber())
+    .houseNumberAddition(opsAddress.getHouseAddition())
+    .postalCode(opsAddress.getPostalCode())
+    .cityName(opsAddress.getCityName())
+    .countryRegionCode(opsAddress.getCountryCode())
+
+    .build();
+
+
+⸻
+
+STEP 3 — Insert this merged object into Accounting Table
+
+accountingDAO.insertPostalAddress(
+    ddUuid,
+    eventId,
+    merged.getStreetName(),
+    merged.getHouseNumber(),
+    merged.getHouseNumberAddition(),
+    merged.getPostalCode(),
+    merged.getCityName(),
+    merged.getCountryRegionCode()
+);
+
+✔ All fields will be filled
+✔ Table now consistent
+✔ Response to client will contain full address
+
+⸻
+
+STEP 4 — FIX SQL (Mandatory)
+
+Replace:
+
+EVENT_ID = eventId
+
+with:
+
+EVENT_ID = ?
+
+
+⸻
+
+🔥 RESULT AFTER FIX
+
+OnePam:
+
+usageType=BSN_ADR
+countryCode=BE
+effectiveDate=...
+
+CofaceOps:
+
+Street = “Brussels Main St”
+House = “12”
+Box = “B”
+Postal = “1000”
+City = “Brussels”
+Country = “BE”
+
+Final merged PostalAddressResponse (what you send + store):
 
 {
-  "involvedPartyExternalIdentifier" : {
-    "involvedPartyExternalIdentifierType" : "KBO_BE",
-    "involvedPartyExternalIdentifierValue" : "46ab69ff-bec2-432f-8884-cc356070a368",
-    "placeOfIssue" : "Hyderabad",
-    "dataSource" : "FOS_IT",
-    "effectiveDate" : "2025-12-01T11:06:28.000Z",
-    "endDate" : "2035-12-01T11:06:28.000Z",
-    "lastUpdateUser" : "IN_ADMIN",
-    "lastUpdateDate" : "2025-12-01T11:09:24.772Z"
-  },
-  "_links" : {
-    "self" : {
-      "href" : "https://apis.ing.com/v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/external-identifiers"
-    }
-  }
-}
-2025-12-01T16:39:25.676+05:30 DEBUG 13328 --- [Integration-Module] [gle/netty4-1-40] c.i.d.api.service.OnePamRepository       : createPostalAddress response body: {
-  "postalAddress" : {
-    "postalAddressUsageType" : "BSN_ADR",
-    "countryCode" : "BE",
-    "lastUpdateUser" : "X-ING-LastUpdateUser",
-    "lastUpdateDate" : "2025-12-01T11:09:24.775Z",
-    "effectiveDate" : "2025-12-01T11:09:24.718Z"
-  },
-  "_links" : {
-    "self" : {
-      "href" : "https://apis.ing.com/v5/involved-parties/de76d820-f463-4790-b2ac-575d601e6ce1/postal-addresses"
-    }
-  }
+  "postalAddressUsageType": "BSN_ADR",
+  "countryCode": "BE",
+  "streetName": "Brussels Main St",
+  "houseNumber": "12",
+  "houseNumberAddition": "B",
+  "postalCode": "1000",
+  "cityName": "Brussels"
 }
 
-accc-tbl
-DD_UUID	VARCHAR2(50 CHAR)	No		1	
-EVENT_ID	VARCHAR2(50 CHAR)	No		2	
-TYP_OF_ENTY	VARCHAR2(10 BYTE)	Yes		3	
-FIRST_NAME	VARCHAR2(255 CHAR)	Yes		4	
-LAST_NAME	VARCHAR2(255 CHAR)	Yes		5	
-BIRTH_DATE	DATE	Yes		6	
-BIRTH_LOCALITY	VARCHAR2(255 CHAR)	Yes		7	
-BIRTH_COUNTRY	VARCHAR2(255 CHAR)	Yes		8	
-ADDR_STREET_NAME	VARCHAR2(64 BYTE)	Yes		9	
-ADDR_HOUSE_NUMBER	VARCHAR2(10 BYTE)	Yes		10	
-ADDR_BOX_NUMBER	VARCHAR2(10 BYTE)	Yes		11	
-ADDR_POSTAL_CODE	VARCHAR2(20 BYTE)	Yes		12	
-ADDR_LOCALITY_NAME	VARCHAR2(50 BYTE)	Yes		13	
-ADDR_COUNTRY_CODE	VARCHAR2(10 CHAR)	Yes		14	
-ORG_NUMBER	VARCHAR2(255 CHAR)	Yes		15	
-UPDATED_TIME	TIMESTAMP(6)	Yes		16	
-DIGITAL_ADDRESS	VARCHAR2(255 CHAR)	Yes		17	
 
+⸻
 
+🚀 If you want
 
+I can generate:
 
-cofaceops-tbl
-OPS_UUID	VARCHAR2(50 CHAR)	Yes		1	
-OPS_NUMBER	VARCHAR2(50 CHAR)	Yes		2	
-OPS_ORGANISATIONUNITNAME	VARCHAR2(255 CHAR)	Yes		3	
-ADR_POSTALADDRESS_STREETNM	VARCHAR2(255 CHAR)	Yes		4	
-ADR_POSTALADDRESS_HOUSENUM	VARCHAR2(255 CHAR)	Yes		5	
-ADR_POSTALADDRESS_HOUSEADD	VARCHAR2(255 CHAR)	Yes		6	
-ADR_POSTALADDRESS_POSTALCD	VARCHAR2(64 BYTE)	Yes		7	
-ADR_POSTALADDRESS_CITYNAME	VARCHAR2(50 BYTE)	Yes		8	
-ADR_POSTALADDRESS_CNTRYCD	VARCHAR2(50 BYTE)	Yes		9	
-OPS_EXTID_DATEOFISSUE	VARCHAR2(50 BYTE)	Yes		10	
-OPS_EXTID_EXPIRYDATE	VARCHAR2(50 BYTE)	Yes		11	
-ADR_DIGITALADDR_FULLTEL	VARCHAR2(50 BYTE)	Yes		12	
-ADR_DIGITALADDR_FULLTELFGN	VARCHAR2(50 BYTE)	Yes		13	
-ADR_DIGITALADDR_EMAIL	VARCHAR2(50 BYTE)	Yes		14	
-ORG_NUMBER	VARCHAR2(255 CHAR)	Yes		15	
-ORG_UUID	VARCHAR2(50 CHAR)	Yes		16	
+✔ FULL updated DAO file
 
+✔ FULL updated AddressService file
 
+✔ CofaceOps DAO class
 
+✔ Merged PostalAddressResponse builder
 
+✔ End-to-end flow diagram
 
-now opsuuid = dduid
-so here lets fetch fields from coface ops tbl for postal addr and fill into acctbl and send in response as well
+✔ Correct logs expected
+
+Just tell me:
+
+“Send full updated files” or
+“Send AddressService + DAO only”

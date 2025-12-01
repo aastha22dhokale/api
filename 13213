@@ -1,0 +1,227 @@
+1 
+ DHOKALE, A. (Aastha) 
+API & Stream Marketplace
+Home
+APIs
+Topics
+Useful links
+Subscribe
+OpenApiDocument P00007 OAS 3
+Involved Party API
+
+Share
+View in Console
+Back to API details
+Create a postal address for the party identified by the uuid.
+post
+/v5/involved-parties/{uuid}/postal-addresses
+
+🏷️ PostalAddresses
+
+Creates a current postal address for the party identified by the uuid. Only one current Postal Address per postalAddressUsageType maybe created.
+
+Creates a future postal address for the party identified by the uuid, when the party already has a current postal address with the same postalAddressUsageType. Only one future Postal Address per postalAddressUsageType maybe created. The endDate of a future postal address must be empty, and the effectiveDate must be greater than the endDate of the current postal address with the same usage type. The current postal address must have an endDate set in order to be able to create the future postal address.
+
+header params
+X-ING-LastUpdateUser string required
+The LastUpdateUser
+
+path params
+uuid string required
+UUID of an Involved Party.
+
+Request body (required)
+The body should contain all the mandatory attributes of an postal address.
+
+
+application/json
+
+Schema
+Examples
+▾
+object required
+postalAddressUsageType string required
+The postalAddressUsageType of a postal address.
+
+example: STD
+countryCode string required
+The countryCode of the postal address.
+
+example: BE
+countryRegionCode string
+The country region code of the postal address.
+
+example: BE-BRU
+districtName string
+The district name of the postal address.
+
+example: Zuidoost
+cityName string
+The city name for the postal address.
+
+example: Brussels
+cityAreaName string
+The city area name for the postal address.
+
+example: Fratton
+regionName string
+The region name for the postal address.
+
+example: Brussels
+postalCode string
+The postal code of the postal address.
+
+example: 1001AB
+streetName string
+The street name for the postal address.
+
+example: Rue Royale
+houseNumber string
+The house number for the postal address.
+
+example: 100
+houseNumberAddition string
+The house number addition for the postal address.
+
+example: C
+buildingName string
+The building name for the postal address.
+
+example: HeadOffice
+deliveryInformation string
+Delivery information for the postal address.
+
+example: Watch out for the dog
+floor string
+The floor for the postal address.
+
+example: 5
+locationUnitNumber string
+The location unit number for the postal address.
+
+example: 910
+departmentName string
+The department name for the postal address.
+
+example: Retail Department
+subdepartmentName string
+The sub department name for the postal address.
+
+example: Electronics
+poBoxNumber string
+PO box for the postal address.
+
+example: 112233
+streetType string
+Street type for the postal address.
+
+example: FR_BOULEVARD
+unstructuredAddressLine1 string
+Unstructured address line 1.
+
+unstructuredAddressLine2 string
+Unstructured address line 2.
+
+unstructuredAddressLine3 string
+Unstructured address line 3.
+
+dataSource string
+Data source for the postal address.
+
+example: FOS_IT
+effectiveDate string
+timestamp
+
+example: 2020-10-10T10:11:12.345+02:00
+lastVerificationDate string
+timestamp
+
+example: 2023-05-03T10:11:12.999Z
+endDate string
+timestamp
+
+example: 2050-12-12T23:59:59.999+02:00
+deliveryFailureReasonType string
+example: ADR_NOT_EXST
+Responses
+
+200
+
+400
+
+404
+
+500
+200 OK
+
+
+application/json
+
+Schema
+Examples
+▾
+object
+▾
+postalAddress object
+postalAddressUsageType string
+example: RSDNT_ADR
+countryCode string
+example: IT
+countryRegionCode string
+example: IT-RM
+districtName string
+example: Zuidoost
+cityName string
+example: ROMA
+cityAreaName string
+example: Fratton
+regionName string
+example: Greater New York
+postalCode string
+example: 808
+streetName string
+example: Rodeo Drive
+houseNumber string
+example: 123
+houseNumberAddition string
+example: A
+buildingName string
+example: White House
+deliveryInformation string
+example: Watch out for the angry dog
+floor string
+example: 5
+locationUnitNumber string
+example: 910
+departmentName string
+example: Retail department
+subdepartmentName string
+example: Electronics
+poBoxNumber string
+example: 123
+streetType string
+example: ES_CALLE
+unstructuredAddressLine1 string
+example: Tempura Road
+unstructuredAddressLine2 string
+example: Big house on the hill
+unstructuredAddressLine3 string
+example: Third house from the right
+deliveryFailureReasonType string
+example: ADR_NOT_EXST
+dataSource string
+example: FOS_IT
+lastUpdateUser string
+example: OnePam
+lastUpdateDate string
+example: 2021-04-27T09:11:11.111Z
+effectiveDate string
+example: 2020-10-10T08:11:12.345Z
+lastVerificationDate string
+example: 2023-05-03T10:11:12.999Z
+endDate string
+example: 2050-12-12T21:59:59.999Z
+▾
+_links object
+▸
+self object

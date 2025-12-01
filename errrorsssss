@@ -1,93 +1,114 @@
-package com.ing.datadist.api.service;
+2025-12-01T15:12:24.283+05:30 DEBUG 33836 --- [Integration-Module] [   scheduling-1] c.i.a.t.c.t.h.r.HostAwareRoutingService  : Routing request 1114710020 for host header: apis.ing.com
+2025-12-01T15:12:24.284+05:30 DEBUG 33836 --- [Integration-Module] [   scheduling-1] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Sending request [1114710020:None] to instance [Inet(
+172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.6:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
+POST /v5/involved-parties HTTP/1.1
+Host: apis.ing.com
+X-B3-SpanId: 71611da54bfa1f64
+Content-Type: application/json;charset=UTF-8
+X-B3-TraceId: 71611da54bfa1f64
+Content-Length: 287
+X-ING-PeerToken: eyJhbGciOiJSUzI1NiIsIng1dCI6Ijg5OjM5Ojk5OjgzOjAwOjg1OjQ2Ojc5OjUwOjU2OjVFOkMxOjJEOjNEOkE4OjJDOjJCOjhGOjgxOkU2Iiwia2lkIjoiODkzOTk5ODMwMDg1NDY3OTUwNTY1RUMxMkQzREE4MkM
+yQjhGODFFNiJ9.eyJzdWIiOiJEYXRhRGlzdHJpYnV0b3JBUElTZXJ2aWNlIiwic3BpZmZlIjoic3BpZmZlOi8vbm9ucHJvZC5pbmcuY29tL3YxL1AzMzU1OC9UU1QvRGF0YURpc3RyaWJ1dG9yQVBJU2VydmljZSIsImVuZHBvaW50cyI6W3
+sibWV0aG9kIjoiUE9TVCIsImhvc3QiOiJhcGlzLmluZy5jb20iLCJwYXRoVGVtcGxhdGUiOiIvdjUvaW52b2x2ZWQtcGFydGllcyIsInZlcnNpb24iOiJsYXRlc3QifSx7Im1ldGhvZCI6IlBPU1QiLCJob3N0IjoiYXBpcy5pbmcuY29tIi
+wicGF0aFRlbXBsYXRlIjoiL3Y1L2ludm9sdmVkLXBhcnRpZXMve3V1aWR9L3Bvc3RhbC1hZGRyZXNzZXMiLCJ2ZXJzaW9uIjoibGF0ZXN0In0seyJtZXRob2QiOiJQT1NUIiwiaG9zdCI6ImFwaS5pbmcuY29tIiwicGF0aFRlbXBsYXRlIj
+oiL3BlZXIvdjEvcGFydHlhbmRhZ3JlZW1lbnRzZWFyY2gvaW52b2x2ZWQtcGFydGllcy9zZWFyY2giLCJ2ZXJzaW9uIjoibGF0ZXN0In0seyJtZXRob2QiOiJQQVRDSCIsImhvc3QiOiJhcGlzLmluZy5jb20iLCJwYXRoVGVtcGxhdGUiOi
+IvdjUvaW52b2x2ZWQtcGFydGllcy97dXVpZH0iLCJ2ZXJzaW9uIjoibGF0ZXN0In0seyJtZXRob2QiOiJQT1NUIiwiaG9zdCI6ImFwaXMuaW5nLmNvbSIsInBhdGhUZW1wbGF0ZSI6Ii92NS9pbnZvbHZlZC1wYXJ0aWVzL3t1dWlkfS9leH
+Rlcm5hbC1pZGVudGlmaWVycyIsInZlcnNpb24iOiJsYXRlc3QifSx7Im1ldGhvZCI6IkdFVCIsImhvc3QiOiJhcGkuaW5nLmNvbSIsInBhdGhUZW1wbGF0ZSI6Ii9EYXRhRGlzdHJpYnV0b3JBUEkvaGVhbHRoIiwidmVyc2lvbiI6ImxhdG
+VzdCJ9LHsibWV0aG9kIjoiREVMRVRFIiwiaG9zdCI6ImFwaS5pbmcuY29tIiwicGF0aFRlbXBsYXRlIjoiL3BlZXIvdjEvb3JnYW5pc2F0aW9uLWhpZXJhcmNoaWVzL3JlbGF0aW9uc2hpcC97dXVpZH0iLCJ2ZXJzaW9uIjoibGF0ZXN0In
+0seyJtZXRob2QiOiJQT1NUIiwiaG9zdCI6ImFwaS5pbmcuY29tIiwicGF0aFRlbXBsYXRlIjoiL3BlZXIvdjEvb3JnYW5pc2F0aW9uLWhpZXJhcmNoaWVzL3JlbGF0aW9uc2hpcC97dXVpZH0vY2xvc2UiLCJ2ZXJzaW9uIjoibGF0ZXN0In
+0seyJtZXRob2QiOiJQT1NUIiwiaG9zdCI6ImFwaS5pbmcuY29tIiwicGF0aFRlbXBsYXRlIjoiL3BlZXIvdjEvb3JnYW5pc2F0aW9uLWhpZXJhcmNoaWVzL3JlbGF0aW9uc2hpcCIsInZlcnNpb24iOiJsYXRlc3QifV0sInZlciI6IjEuMC
+IsImp0aSI6IjM4ZTM0YzIwLTczNmYtNDcyYy1iOTFiLTY0Y2Y5ZDgwOGRlYiIsInR5cCI6InBlZXIiLCJleHAiOjE4NTg4ODQ0MDgsIm5iZiI6MTc2NDIxMzYzMCwiaWF0IjoxNzY0MjEzNjMwLCJpc3MiOiJBUElSZWdpc3RyeUFQSSJ9.n
+T3gTpll9dybQ2HO9tcs06PEaglSXGdhCupW2v-5g7M5Br5aA2E6Mgn5keX90gNFk6_xTqU14QpfXvjUbpf0aEe87AUmmnlsn7oijJDpR6lmaJ8makzR758z0gr2KMh4t4I9roZUe8brGqJyxk4o4lAeDzlpgdYPff-iPKz4J3PWZ31mPbPBW
+F1wH9ELzOz-lkPfNkIIFxS8CPitFrppq1gCpP0ldh5jQzBDZTeAsVA067U1D4z45gnWH1pTaAyjlfn6GfCuMovu-uOX_5Sy8kazwcITWkByN12pP42M0XO2fgFVhIhOadGDOcem1fHbeUEICmBrM7R03ku85aAPGWFxOc2sFdS5NTXxnNbTk
+zoRQ9cin-NmQ583eTrzD5SWnTgPMVf0q2Ai8N3JWgOlKa6fYKfwP-FQmMA-0jEIEVXnr7rVoGYBdOY3cvj0MefpUoJqkzuYV8NXv6VoY7xl_iArUcO896VbV1J5QQO1Z79xuwC4tPbGc3VfBnyF3NsRVc8NA1VQA7aAbulzNHpW6CEW8igj6UHy3um53wGhaa3aR74QgEvcA9rSBCotXvFzHJYWwdpuzGuVqTXtZr54lt1UOya9p32RKf_fkl6zDMxiZ9KZdN-TrUJ9acKgXfp_Mx2WnHm6JCTzTw5jT-m4tIdGSzRYNBFlhMs1gNivfDA
+X-ING-LastUpdateUser: IN_ADMIN
 
-import com.ing.datadist.api.model.CreatePostalAddressRequest;
-import com.ing.datadist.api.model.CreatePostalAddressResponse;
-import com.ing.datadist.api.model.PostalAddressResponse;
-import com.ing.datadist.api.repository.AccountingDAO;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+{"organisationUnit":{"dataSource":"FOS_IT","logicalDataDomain":"ING_BE_EXT_DATA","preferredLanguage":"fr","channelOfEntry":"MOB_CHAN","organisationUnitStructureType":"MAND_USR_GRP","organisationUnitNames":[{"organisationUnitNameType":"OU_NM","organisationUnitName":"BALA CORPORATION"}]}}
+2025-12-01T15:12:24.294+05:30 DEBUG 33836 --- [Integration-Module] [gle/netty4-1-31] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [1112770492] to request [844175967
+:None] from instance [Inet(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.11:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,InvolvedPartyAPI)))] with contents
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2025 09:42:23 GMT
+Pragma: no-cache
+traceparent: 00-0acdc20c39aaa0db06ef867c1cb7e945-2fa85c1652750052-01
+Content-Type: application/json
+Cache-Control: no-store
+Content-Length: 397
 
-//import java.security.Timestamp;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.concurrent.ExecutionException;
-
-
-@Service
-
-@Slf4j
-
-public class AddressService {
-//
-private final OnePamRepository repository;
-
-    private final AccountingDAO accountingDAO;
-
-    public AddressService(OnePamRepository repository, AccountingDAO accountingDAO) {
-
-        this.repository = repository;
-
-        this.accountingDAO = accountingDAO;
-
+{
+  "postalAddress" : {
+    "postalAddressUsageType" : "BSN_ADR",
+    "countryCode" : "BE",
+    "lastUpdateUser" : "X-ING-LastUpdateUser",
+    "lastUpdateDate" : "2025-12-01T09:42:23.344Z",
+    "effectiveDate" : "2025-12-01T09:42:23.260Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/fdeed343-9cba-4a15-83fa-925de1f851ff/postal-addresses"
     }
+  }
+}
+2025-12-01T15:12:24.295+05:30  INFO 33836 --- [Integration-Module] [onPool-worker-7] c.i.datadist.api.service.AddressService  : Received postalAddress: PostalAddressResponse(postal
+AddressUsageType=BSN_ADR, countryCode=BE, countryRegionCode=null, districtName=null, cityName=null, postalCode=null, streetName=null, houseNumber=null, houseNumberAddition=null, effectiveDate=2025-12-01T09:42:23.260Z, endDate=null)
+2025-12-01T15:12:24.308+05:30 ERROR 33836 --- [Integration-Module] [onPool-worker-7] c.i.datadist.api.service.AddressService  : Failed to insert postal address for UUID=fdeed343-9c
+ba-4a15-83fa-925de1f851ff : PreparedStatementCallback; bad SQL grammar [INSERT INTO accounting_table (DD_UUID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, ADDR_POSTAL_CODE, ADDR_COUNTRY_CODE, ADDR_LOCALITY_NAME, UPDATED_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?)]
 
-    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
+org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [INSERT INTO accounting_table (DD_UUID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, ADDR_POSTAL_CODE, ADDR_COUNTRY_CODE, ADDR_LOCALITY_NAME, UPDATED_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?)]
+        at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:103) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:107) ~[spring-jdbc-6.2.8.jar:6.2.8]        
+        at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1556) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:677) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:972) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1016) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1026) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at com.ing.datadist.api.repository.AccountingDAO.insertPostalAddress(AccountingDAO.java:136) ~[classes/:na]
+        at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+        at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+        at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-6.2.8.jar:6.2.8]
+        at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.2.8.jar:6.2.8]
+        at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.2.8.jar:6.2.8]
+        at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:138) ~[spring-tx-6.2.8.jar:6.2.8]      
+        at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[na:na]
+Caused by: java.sql.SQLSyntaxErrorException: ORA-00942: table or view does not exist
 
-        log.info("Calling OnePAM with request: {}", request);
+https://docs.oracle.com/error-help/db/ora-00942/
+        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:715) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:615) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        at oracle.jdbc.driver.T4C8Oall.processError(T4C8Oall.java:1372) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:972) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:237) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        at oracle.jdbc.driver.T4C8Oall.doOALL(T4C8Oall.java:524) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:658) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        ... 22 common frames omitted
+Caused by: oracle.jdbc.OracleDatabaseException: ORA-00942: table or view does not exist
 
-        // Call repository and get wrapped response
+        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:723) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        ... 40 common frames omitted
 
-        CreatePostalAddressResponse responseWrapper = repository.createPostalAddress(uuid, request).join();
+2025-12-01T15:12:24.309+05:30 ERROR 33836 --- [Integration-Module] [onPool-worker-7] c.i.d.a.service.OrganisationUnitService  : Postal address create failed for UUID=fdeed343-9cba-
+4a15-83fa-925de1f851ff : org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [INSERT INTO accounting_table (DD_UUID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, ADDR_POSTAL_CODE, ADDR_COUNTRY_CODE, ADDR_LOCALITY_NAME, UPDATED_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?)]
 
-        // Extract postalAddress object
+java.lang.RuntimeException: org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [INSERT INTO accounting_table (DD_UUID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, ADDR_POSTAL_CODE, ADDR_COUNTRY_CODE, ADDR_LOCALITY_NAME, UPDATED_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?)]
+        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:74) ~[classes/:na]
+        at com.ing.datadist.api.service.OrganisationUnitService.lambda$processOrganisationUnit$1(OrganisationUnitService.java:177) ~[classes/:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[na:na]
+Caused by: org.springframework.jdbc.BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [INSERT INTO accounting_table (DD_UUID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, ADDR_POSTAL_CODE, ADDR_COUNTRY_CODE, ADDR_LOCALITY_NAME, UPDATED_TIME) VALUES (?, ?, ?, ?, ?, ?, ?, ?)]
+        at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:103) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:107) ~[spring-jdbc-6.2.8.jar:6.2.8]        
+        at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1556) ~[spring-jdbc-6.2.8.jar:6.2.8]
+        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:66) ~[classes/:na]
+        ... 8 common frames omitted
+Caused by: java.sql.SQLSyntaxErrorException: ORA-00942: table or view does not exist
 
-        PostalAddressResponse postalAddress = responseWrapper.getPostalAddress();
+https://docs.oracle.com/error-help/db/ora-00942/
+        ... 22 common frames omitted
+Caused by: oracle.jdbc.OracleDatabaseException: ORA-00942: table or view does not exist
 
-        log.info("Received postalAddress: {}", postalAddress);
-
-        try {
-
-            // Convert Instant to Timestamp in proper DB format
-
-            Instant effectiveInstant = postalAddress.getEffectiveDate();
-
-            Timestamp effectiveTimestamp = effectiveInstant != null
-
-                    ? Timestamp.valueOf(LocalDateTime.ofInstant(effectiveInstant, ZoneId.systemDefault()))
-
-                    : null;
-
-            // Insert into DB
-
-            accountingDAO.insertPostalAddress(uuid,
-
-                    postalAddress.getStreetName(),
-
-                    postalAddress.getHouseNumber(),
-
-                    postalAddress.getHouseNumberAddition(),
-
-                    postalAddress.getPostalCode(),
-
-                    postalAddress.getCityName(),
-
-                    postalAddress.getCountryCode(),
-
-                    effectiveTimestamp);
-
-            log.info("Postal address inserted successfully for UUID={}", uuid);
-
-        } catch (Exception e) {
-
-            log.error("Failed to insert postal address for UUID={} : {}", uuid, e.getMessage(), e);
-
-            throw new RuntimeException(e);
-
-        }
-
-        return postalAddress;
-
-    }
-fix
+        at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:723) ~[ojdbc17-23.8.0.25.04.jar:23.8.0.25.04]
+        ... 40 common frames omitted

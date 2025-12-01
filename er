@@ -1,4 +1,71 @@
 
+com.ing.datadist.api.exception.DataDistributionApiException: Failed to build request for postal address creation
+        at com.ing.datadist.api.service.OnePamRepository.createPostalAddress(OnePamRepository.java:351) ~[classes/:na]
+        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:37) ~[classes/:na]
+        at com.ing.datadist.api.service.OrganisationUnitService.lambda$processOrganisationUnit$1(OrganisationUnitService.java:177) ~[classes/:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[na:na]
+
+package com.ing.datadist.api.service;
+
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.CreatePostalAddressResponse;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import com.ing.datadist.api.repository.AccountingDAO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.ExecutionException;
+
+
+@Service
+
+@Slf4j
+
+public class AddressService {
+
+    private final OnePamRepository repository;
+
+    private final AccountingDAO accountingDAO;
+
+    public AddressService(OnePamRepository repository, AccountingDAO accountingDAO) {
+
+        this.repository = repository;
+
+        this.accountingDAO = accountingDAO;
+
+    }
+
+    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
+
+        log.info("Calling OnePAM with request: {}", request);
+
+        // Call repository and get wrapped response
+
+        CreatePostalAddressResponse responseWrapper = repository.createPostalAddress(uuid, request)
+
+                .join(); // wait for async completion
+
+        // Extract the postalAddress object from wrapper
+
+        PostalAddressResponse postalAddress = responseWrapper.getPostalAddress();
+
+        log.info("Received postalAddress: {}", postalAddress);
+
+        // Insert into DB
+
+        accountingDAO.insertPostalAddress(uuid, postalAddress);
+
+        return postalAddress;
+
+    }
+
+}
 package com.ing.datadist.api.service;
 
 import com.ing.datadist.api.model.*;
@@ -144,8 +211,79 @@ public class OrganisationUnitService {
                 log.error("External ID update failed for UUID={} : {}", finalUuid, e.getMessage(), e);
             }
         });
-
         String finalUuid1 = uuid;
+
+        CompletableFuture<Void> createPostalAddressAsync = CompletableFuture.runAsync(() -> {
+
+            try {
+
+                // Pre-insert/update: only table-relevant fields
+
+                accountingDAO.updatePostalAddress(finalUuid1,
+
+                        postalRequest.getStreetName(),
+
+                        postalRequest.getHouseNumber(),
+
+                        postalRequest.getHouseNumberAddition(),
+
+                        postalRequest.getPostalCode(),
+
+                        postalRequest.getCityName(),
+
+                        postalRequest.getCountryCode());
+
+                mappingDAO.insertEventTrack(finalUuid1, "OrganisationUnitPostalAddressAPI",
+
+                        EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(),
+
+                        NotificationStatus.PENDING.name());
+
+                // Call AddressService -> returns PostalAddressResponse from wrapper
+
+                PostalAddressResponse addr = addressService.createPostalAddress(finalUuid1, postalRequest);
+
+                if (addr != null) {
+
+                    // Update DB with the API-returned values (ensures consistency with OnePAM)
+
+                    accountingDAO.updatePostalAddress(finalUuid1,
+
+                            addr.getStreetName(),
+
+                            addr.getHouseNumber(),
+
+                            addr.getHouseNumberAddition(),
+
+                            addr.getPostalCode(),
+
+                            addr.getCityName(),
+
+                            addr.getCountryCode());
+
+                    log.info("Postal address created for UUID={}", finalUuid1);
+
+                    mappingDAO.insertEventTrack(finalUuid1, "OrganisationUnitPostalAddressAPI",
+
+                            EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(),
+
+                            NotificationStatus.RECEIVED.name());
+
+                } else {
+
+                    log.warn("Postal address response was null for UUID={}", finalUuid1);
+
+                }
+
+            } catch (Exception e) {
+
+                log.error("Postal address create failed for UUID={} : {}", finalUuid1, e.getMessage(), e);
+
+            }
+
+        });
+
+        /*String finalUuid1 = uuid;
         CompletableFuture<Void> createPostalAddressAsync = CompletableFuture.runAsync(() -> {
             try {
                 accountingDAO.updatePostalAddress(finalUuid1, postalRequest.getStreetName(),postalRequest.getHouseNumber(),
@@ -173,7 +311,7 @@ public class OrganisationUnitService {
                 log.error("Postal address create failed for UUID={} : {}", finalUuid1, e.getMessage(), e);
             }
         });
-
+*/
 
         /*String finalUuid2 = uuid;
         CompletableFuture<Void> createDigitalAddressAsync = CompletableFuture.runAsync(() -> {
@@ -314,3 +452,91 @@ public class OrganisationUnitService {
 
     }
 }
+    public CompletableFuture<CreatePostalAddressResponse> createPostalAddress(String uuid, CreatePostalAddressRequest payload) {
+
+        try {
+
+            log.info("createPostalAddress request payload: {}", payload);
+
+            String url = RegkeyEnum.CREATE_POSTAL_ADDRESS.resolveEndpoint(uuid);
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+
+            Request request = new RichHttpRequestBuilder()
+
+                    .withUrl(url)
+
+                    .withMethod(Method.Post())
+
+                    .withJsonContent(jsonPayload)
+
+                    .withHeader("X-ING-LastUpdateUser", payload.getDataSource()) // or user
+
+                    .build();
+
+            printRequest(request);
+
+            return apiClient.apply(request)
+
+                    .thenApply(response -> {
+
+                        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+
+                            try {
+
+                                // Deserialize JSON into wrapper object
+
+                                return objectMapper.readValue(response.toString(), CreatePostalAddressResponse.class);
+
+                            } catch (Exception e) {
+
+                                log.error("Error parsing response: {}", e.getMessage());
+
+                                throw new DataDistributionApiException(
+
+                                        RegkeyEnum.CREATE_POSTAL_ADDRESS,
+
+                                        "Failed to parse postal address response",
+
+                                        e.getMessage()
+
+                                );
+
+                            }
+
+                        } else {
+
+                            log.error("Failed to create postal address. Status: {}", response.statusCode());
+
+                            throw new DataDistributionApiException(
+
+                                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+
+                                    "Failed to create postal address",
+
+                                    "Status: " + response.statusCode()
+
+                            );
+
+                        }
+
+                    });
+
+        } catch (Exception e) {
+
+            log.error("createPostalAddress API error: {}", e.getMessage());
+
+            throw new DataDistributionApiException(
+
+                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+
+                    "Failed to build request for postal address creation",
+
+                    e.getMessage()
+
+            );
+
+        }
+
+    }
+

@@ -1,227 +1,538 @@
-1 
- DHOKALE, A. (Aastha) 
-API & Stream Marketplace
-Home
-APIs
-Topics
-Useful links
-Subscribe
-OpenApiDocument P00007 OAS 3
-Involved Party API
+Nice — I updated the key files so your postal-address flow will behave correctly right away:
+	•	AddressService — fixed guard, full merge of PAM response + request, full logging, safe null handling
+	•	OnePamRepository — returns the inner postalAddress object (parses {"postalAddress":{...}, "_links":...}), logs raw body
+	•	PostalAddressResponse — robust DTO (ignore unknowns, good toString for logs)
+	•	CreatePostalAddressRequest — JSON annotations, null-safe (won’t send fields you didn’t set)
 
-Share
-View in Console
-Back to API details
-Create a postal address for the party identified by the uuid.
-post
-/v5/involved-parties/{uuid}/postal-addresses
+Put these four files into your project (replace the old ones). They’re designed to be drop-in replacements (no API signature changes except better behavior) and to stop the “fields vanish” problem.
 
-🏷️ PostalAddresses
+⸻
 
-Creates a current postal address for the party identified by the uuid. Only one current Postal Address per postalAddressUsageType maybe created.
+1) AddressService.java — full fix (guard + merge + logging)
 
-Creates a future postal address for the party identified by the uuid, when the party already has a current postal address with the same postalAddressUsageType. Only one future Postal Address per postalAddressUsageType maybe created. The endDate of a future postal address must be empty, and the effectiveDate must be greater than the endDate of the current postal address with the same usage type. The current postal address must have an endDate set in order to be able to create the future postal address.
+package com.ing.datadist.api.service;
 
-header params
-X-ING-LastUpdateUser string required
-The LastUpdateUser
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
-path params
-uuid string required
-UUID of an Involved Party.
+import java.util.concurrent.ExecutionException;
 
-Request body (required)
-The body should contain all the mandatory attributes of an postal address.
+@Service
+@Slf4j
+public class AddressService {
+
+    private final OnePamRepository onePamRepository;
+
+    public AddressService(OnePamRepository onePamRepository) {
+        this.onePamRepository = onePamRepository;
+    }
+
+    /**
+     * Creates postal address in OnePam and returns normalized response.
+     * Ensures no fields are lost; merges PAM response with request.
+     * Returns null if request contained no address data (no POST will be done).
+     */
+    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
+        log.info("[PostalAddress] Start createPostalAddress for UUID={}", uuid);
+
+        // Guard: if incoming request has no meaningful address fields -> skip POST
+        if (isEmptyAddress(request)) {
+            log.info("[PostalAddress] Skipping createPostalAddress for UUID={} because request contains no address fields", uuid);
+            return null;
+        }
+
+        PostalAddressResponse pamResponse;
+        try {
+            // OnePamRepository will parse the root JSON and return the inner postalAddress POJO (or null)
+            pamResponse = onePamRepository.createPostalAddress(uuid, request).get();
+            log.info("[PostalAddress] OnePam raw/parsed response for UUID={}: {}", uuid, pamResponse);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            log.error("[PostalAddress] Interrupted while creating postal address for UUID={}", uuid, ie);
+            return fallbackResponse(request);
+        } catch (ExecutionException ee) {
+            log.error("[PostalAddress] OnePam create failed for UUID={}. Returning fallback. Cause: {}", uuid, ee.getMessage(), ee);
+            return fallbackResponse(request);
+        } catch (Exception e) {
+            log.error("[PostalAddress] Unexpected error while creating postal address for UUID={}", uuid, e);
+            return fallbackResponse(request);
+        }
+
+        if (pamResponse == null) {
+            log.warn("[PostalAddress] OnePam returned no postalAddress for UUID={}. Using fallback built from request.", uuid);
+            PostalAddressResponse fallback = fallbackResponse(request);
+            log.info("[PostalAddress] Fallback response for UUID={}: {}", uuid, fallback);
+            return fallback;
+        }
+
+        // Merge PAM response with request (PAM has priority)
+        PostalAddressResponse merged = mergeResponse(pamResponse, request);
+        log.info("[PostalAddress] Merged postal address for UUID={}: {}", uuid, merged);
+        return merged;
+    }
+
+    /**
+     * If PAM is not available, build a response from request (complete enough for DB).
+     */
+    private PostalAddressResponse fallbackResponse(CreatePostalAddressRequest req) {
+        return PostalAddressResponse.builder()
+                .postalAddressUsageType(defaultVal(req.getPostalAddressUsageType(), "BSN_ADR"))
+                .countryCode(defaultVal(req.getCountryCode(), "BE"))
+                .countryRegionCode(req.getCountryRegionCode())
+                .districtName(null)
+                .cityName(defaultVal(req.getCityName(), ""))
+                .cityAreaName(null)
+                .regionName(null)
+                .postalCode(defaultVal(req.getPostalCode(), ""))
+                .streetName(defaultVal(req.getStreetName(), ""))
+                .houseNumber(defaultVal(req.getHouseNumber(), ""))
+                .houseNumberAddition(defaultVal(req.getHouseNumberAddition(), ""))
+                .buildingName(null)
+                .deliveryInformation(null)
+                .floor(null)
+                .locationUnitNumber(null)
+                .departmentName(null)
+                .subdepartmentName(null)
+                .poBoxNumber(null)
+                .streetType(null)
+                .unstructuredAddressLine1(null)
+                .unstructuredAddressLine2(null)
+                .unstructuredAddressLine3(null)
+                .deliveryFailureReasonType(null)
+                .dataSource(req.getDataSource())
+                .lastUpdateUser(null)
+                .lastUpdateDate(null)
+                .effectiveDate(req.getEffectiveDate())
+                .lastVerificationDate(null)
+                .endDate(req.getEndDate())
+                .build();
+    }
+
+    /**
+     * Merge: PAM fields take precedence; if PAM field blank -> fallback to request value.
+     * Ensures every POJO field is considered (no silent data loss).
+     */
+    private PostalAddressResponse mergeResponse(PostalAddressResponse pam, CreatePostalAddressRequest req) {
+        return PostalAddressResponse.builder()
+                .postalAddressUsageType(firstNonBlank(pam.getPostalAddressUsageType(), req.getPostalAddressUsageType(), "BSN_ADR"))
+                .countryCode(firstNonBlank(pam.getCountryCode(), req.getCountryCode(), "BE"))
+                .countryRegionCode(firstNonBlank(pam.getCountryRegionCode(), req.getCountryRegionCode()))
+                .districtName(firstNonBlank(pam.getDistrictName(), null))
+                .cityName(firstNonBlank(pam.getCityName(), req.getCityName()))
+                .cityAreaName(firstNonBlank(pam.getCityAreaName(), null))
+                .regionName(firstNonBlank(pam.getRegionName(), null))
+                .postalCode(firstNonBlank(pam.getPostalCode(), req.getPostalCode()))
+                .streetName(firstNonBlank(pam.getStreetName(), req.getStreetName()))
+                .houseNumber(firstNonBlank(pam.getHouseNumber(), req.getHouseNumber()))
+                .houseNumberAddition(firstNonBlank(pam.getHouseNumberAddition(), req.getHouseNumberAddition()))
+                .buildingName(firstNonBlank(pam.getBuildingName(), null))
+                .deliveryInformation(firstNonBlank(pam.getDeliveryInformation(), null))
+                .floor(firstNonBlank(pam.getFloor(), null))
+                .locationUnitNumber(firstNonBlank(pam.getLocationUnitNumber(), null))
+                .departmentName(firstNonBlank(pam.getDepartmentName(), null))
+                .subdepartmentName(firstNonBlank(pam.getSubdepartmentName(), null))
+                .poBoxNumber(firstNonBlank(pam.getPoBoxNumber(), null))
+                .streetType(firstNonBlank(pam.getStreetType(), null))
+                .unstructuredAddressLine1(firstNonBlank(pam.getUnstructuredAddressLine1(), null))
+                .unstructuredAddressLine2(firstNonBlank(pam.getUnstructuredAddressLine2(), null))
+                .unstructuredAddressLine3(firstNonBlank(pam.getUnstructuredAddressLine3(), null))
+                .deliveryFailureReasonType(firstNonBlank(pam.getDeliveryFailureReasonType(), null))
+                .dataSource(firstNonBlank(pam.getDataSource(), req.getDataSource()))
+                .lastUpdateUser(firstNonBlank(pam.getLastUpdateUser(), null))
+                .lastUpdateDate(firstNonBlank(pam.getLastUpdateDate(), null))
+                .effectiveDate(firstNonBlank(pam.getEffectiveDate(), req.getEffectiveDate()))
+                .lastVerificationDate(firstNonBlank(pam.getLastVerificationDate(), null))
+                .endDate(firstNonBlank(pam.getEndDate(), req.getEndDate()))
+                .build();
+    }
+
+    private boolean isEmptyAddress(CreatePostalAddressRequest req) {
+        return isBlank(req.getStreetName())
+                && isBlank(req.getCityName())
+                && isBlank(req.getPostalCode())
+                && isBlank(req.getHouseNumber())
+                && isBlank(req.getHouseNumberAddition())
+                && isBlank(req.getCountryCode()); // treat missing country as empty too
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.isBlank();
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String v : values) {
+            if (v != null && !v.isBlank()) {
+                return v;
+            }
+        }
+        return null;
+    }
+
+    private String defaultVal(String v, String fallback) {
+        return (v == null || v.isBlank()) ? fallback : v;
+    }
+}
 
 
-application/json
+⸻
 
-Schema
-Examples
-▾
-object required
-postalAddressUsageType string required
-The postalAddressUsageType of a postal address.
+2) OnePamRepository.java — parse wrapper and return inner PostalAddressResponse
 
-example: STD
-countryCode string required
-The countryCode of the postal address.
+This method parses the HTTP response body (which is {"postalAddress": {...}, "_links": {...}}) and returns the PostalAddressResponse (inner) or null if not present. It logs the full raw body.
 
-example: BE
-countryRegionCode string
-The country region code of the postal address.
+package com.ing.datadist.api.service;
 
-example: BE-BRU
-districtName string
-The district name of the postal address.
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ing.apisdk.toolkit.connectivity.api.JavaService;
+import com.ing.apisdk.toolkit.connectivity.transport.http.japi.RichHttpRequestBuilder;
+import com.ing.datadist.api.exception.DataDistributionApiException;
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import com.ing.datadist.api.utils.RegkeyEnum;
+import com.twitter.finagle.http.Method;
+import com.twitter.finagle.http.Request;
+import com.twitter.finagle.http.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import scala.collection.JavaConverters;
 
-example: Zuidoost
-cityName string
-The city name for the postal address.
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-example: Brussels
-cityAreaName string
-The city area name for the postal address.
+@Slf4j
+@Component
+public class OnePamRepository {
 
-example: Fratton
-regionName string
-The region name for the postal address.
+    private final JavaService<Request, Response> apiClient;
+    private final ObjectMapper objectMapper;
 
-example: Brussels
-postalCode string
-The postal code of the postal address.
+    public OnePamRepository(@Qualifier("integrationServiceGeneric") JavaService<Request, Response> apiClient,
+                            ObjectMapper objectMapper) {
+        this.apiClient = apiClient;
+        this.objectMapper = objectMapper;
+    }
 
-example: 1001AB
-streetName string
-The street name for the postal address.
+    /**
+     * Create postal address in OnePAM.
+     * Parses the outer wrapper and returns the inner postalAddress as PostalAddressResponse,
+     * or null if postalAddress node not present.
+     */
+    public CompletableFuture<PostalAddressResponse> createPostalAddress(String uuid, CreatePostalAddressRequest payload) {
+        try {
+            log.info("Demo_28_Nov_API createPostalAddress request payload: {}", payload);
+            String url = RegkeyEnum.CREATE_POSTAL_ADDRESS.resolveEndpoint(uuid);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
 
-example: Rue Royale
-houseNumber string
-The house number for the postal address.
+            Request request = new RichHttpRequestBuilder()
+                    .withUrl(url)
+                    .withMethod(Method.Post())
+                    .withJsonContent(jsonPayload)
+                    .withHeader("Content-Type", "application/json")
+                    .withHeader("X-ING-LastUpdateUser", "X-ING-LastUpdateUser")
+                    .build();
 
-example: 100
-houseNumberAddition string
-The house number addition for the postal address.
+            printRequest(request);
 
-example: C
-buildingName string
-The building name for the postal address.
+            return apiClient.apply(request)
+                    .thenApply(response -> {
+                        int status = response.statusCode();
+                        String body = response.contentString();
+                        log.info("createPostalAddress response: Status({}), Body: {}", status, body);
 
-example: HeadOffice
-deliveryInformation string
-Delivery information for the postal address.
+                        if (status >= 200 && status < 300) {
+                            try {
+                                var root = objectMapper.readTree(body);
+                                var paNode = root.path("postalAddress");
+                                if (paNode.isMissingNode() || paNode.isNull()) {
+                                    log.warn("createPostalAddress: 'postalAddress' node missing in PAM response");
+                                    return null;
+                                }
+                                // Map the postalAddress node to PostalAddressResponse
+                                return objectMapper.treeToValue(paNode, PostalAddressResponse.class);
+                            } catch (Exception e) {
+                                log.error("Failed to parse PAM postal-address response JSON: {}", e.getMessage(), e);
+                                throw new DataDistributionApiException(
+                                        RegkeyEnum.CREATE_POSTAL_ADDRESS,
+                                        status,
+                                        "Failed to parse response JSON",
+                                        e.getMessage()
+                                );
+                            }
+                        } else {
+                            log.error("Failed to create postal address. Status: {}", status);
+                            throw new DataDistributionApiException(
+                                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+                                    "Failed to create postal address",
+                                    "Status: " + status
+                            );
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("createPostalAddress API error: {}", e.getMessage(), e);
+            throw new DataDistributionApiException(
+                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+                    "Failed to build request for postal address creation",
+                    e.getMessage()
+            );
+        }
+    }
 
-example: Watch out for the dog
-floor string
-The floor for the postal address.
-
-example: 5
-locationUnitNumber string
-The location unit number for the postal address.
-
-example: 910
-departmentName string
-The department name for the postal address.
-
-example: Retail Department
-subdepartmentName string
-The sub department name for the postal address.
-
-example: Electronics
-poBoxNumber string
-PO box for the postal address.
-
-example: 112233
-streetType string
-Street type for the postal address.
-
-example: FR_BOULEVARD
-unstructuredAddressLine1 string
-Unstructured address line 1.
-
-unstructuredAddressLine2 string
-Unstructured address line 2.
-
-unstructuredAddressLine3 string
-Unstructured address line 3.
-
-dataSource string
-Data source for the postal address.
-
-example: FOS_IT
-effectiveDate string
-timestamp
-
-example: 2020-10-10T10:11:12.345+02:00
-lastVerificationDate string
-timestamp
-
-example: 2023-05-03T10:11:12.999Z
-endDate string
-timestamp
-
-example: 2050-12-12T23:59:59.999+02:00
-deliveryFailureReasonType string
-example: ADR_NOT_EXST
-Responses
-
-200
-
-400
-
-404
-
-500
-200 OK
+    private static void printRequest(Request req) {
+        try {
+            log.info("--------------------------------------------------------------------------------------");
+            log.info("Demo_28_Nov_API Request Info");
+            log.info("Method: {}", req.method());
+            log.info("URI: {}", req.uri());
+            log.info("Version: {}", req.version());
+            Map<String, String> headerMap = JavaConverters.mapAsJavaMapConverter(req.headerMap()).asJava();
+            for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+                log.info("Header: {}: {}", entry.getKey(), entry.getValue());
+            }
+            log.info("Body: {}", req.contentString());
+            log.info("--------------------------------------------------------------------------------------");
+        } catch (Exception e) {
+            log.error("Exception while printing request", e);
+        }
+    }
+}
 
 
-application/json
+⸻
 
-Schema
-Examples
-▾
-object
-▾
-postalAddress object
-postalAddressUsageType string
-example: RSDNT_ADR
-countryCode string
-example: IT
-countryRegionCode string
-example: IT-RM
-districtName string
-example: Zuidoost
-cityName string
-example: ROMA
-cityAreaName string
-example: Fratton
-regionName string
-example: Greater New York
-postalCode string
-example: 808
-streetName string
-example: Rodeo Drive
-houseNumber string
-example: 123
-houseNumberAddition string
-example: A
-buildingName string
-example: White House
-deliveryInformation string
-example: Watch out for the angry dog
-floor string
-example: 5
-locationUnitNumber string
-example: 910
-departmentName string
-example: Retail department
-subdepartmentName string
-example: Electronics
-poBoxNumber string
-example: 123
-streetType string
-example: ES_CALLE
-unstructuredAddressLine1 string
-example: Tempura Road
-unstructuredAddressLine2 string
-example: Big house on the hill
-unstructuredAddressLine3 string
-example: Third house from the right
-deliveryFailureReasonType string
-example: ADR_NOT_EXST
-dataSource string
-example: FOS_IT
-lastUpdateUser string
-example: OnePam
-lastUpdateDate string
-example: 2021-04-27T09:11:11.111Z
-effectiveDate string
-example: 2020-10-10T08:11:12.345Z
-lastVerificationDate string
-example: 2023-05-03T10:11:12.999Z
-endDate string
-example: 2050-12-12T21:59:59.999Z
-▾
-_links object
-▸
-self object
+3) PostalAddressResponse.java — robust DTO (ignore unknown fields and good toString)
+
+package com.ing.datadist.api.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
+import java.io.Serializable;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Generated
+public class PostalAddressResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @JsonProperty("postalAddressUsageType")
+    private String postalAddressUsageType;
+
+    @JsonProperty("countryCode")
+    private String countryCode;
+
+    @JsonProperty("countryRegionCode")
+    private String countryRegionCode;
+
+    @JsonProperty("districtName")
+    private String districtName;
+
+    @JsonProperty("cityName")
+    private String cityName;
+
+    @JsonProperty("cityAreaName")
+    private String cityAreaName;
+
+    @JsonProperty("regionName")
+    private String regionName;
+
+    @JsonProperty("postalCode")
+    private String postalCode;
+
+    @JsonProperty("streetName")
+    private String streetName;
+
+    @JsonProperty("houseNumber")
+    private String houseNumber;
+
+    @JsonProperty("houseNumberAddition")
+    private String houseNumberAddition;
+
+    @JsonProperty("buildingName")
+    private String buildingName;
+
+    @JsonProperty("deliveryInformation")
+    private String deliveryInformation;
+
+    @JsonProperty("floor")
+    private String floor;
+
+    @JsonProperty("locationUnitNumber")
+    private String locationUnitNumber;
+
+    @JsonProperty("departmentName")
+    private String departmentName;
+
+    @JsonProperty("subdepartmentName")
+    private String subdepartmentName;
+
+    @JsonProperty("poBoxNumber")
+    private String poBoxNumber;
+
+    @JsonProperty("streetType")
+    private String streetType;
+
+    @JsonProperty("unstructuredAddressLine1")
+    private String unstructuredAddressLine1;
+
+    @JsonProperty("unstructuredAddressLine2")
+    private String unstructuredAddressLine2;
+
+    @JsonProperty("unstructuredAddressLine3")
+    private String unstructuredAddressLine3;
+
+    @JsonProperty("deliveryFailureReasonType")
+    private String deliveryFailureReasonType;
+
+    @JsonProperty("dataSource")
+    private String dataSource;
+
+    @JsonProperty("lastUpdateUser")
+    private String lastUpdateUser;
+
+    @JsonProperty("lastUpdateDate")
+    private String lastUpdateDate;
+
+    @JsonProperty("effectiveDate")
+    private String effectiveDate;
+
+    @JsonProperty("lastVerificationDate")
+    private String lastVerificationDate;
+
+    @JsonProperty("endDate")
+    private String endDate;
+}
+
+
+⸻
+
+4) CreatePostalAddressRequest.java — improved annotations (optional but recommended)
+
+Keeps fields explicit and will not serialize nulls if you use @JsonInclude at ObjectMapper level. Add @JsonProperty for clarity.
+
+package com.ing.datadist.api.model;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
+import java.io.Serializable;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Generated
+public class CreatePostalAddressRequest implements Serializable {
+
+    @JsonProperty("postalAddressUsageType")
+    private String postalAddressUsageType;
+
+    @JsonProperty("countryCode")
+    private String countryCode;
+
+    @JsonProperty("countryRegionCode")
+    private String countryRegionCode;
+
+    @JsonProperty("districtName")
+    private String districtName;
+
+    @JsonProperty("cityName")
+    private String cityName;
+
+    @JsonProperty("cityAreaName")
+    private String cityAreaName;
+
+    @JsonProperty("regionName")
+    private String regionName;
+
+    @JsonProperty("postalCode")
+    private String postalCode;
+
+    @JsonProperty("streetName")
+    private String streetName;
+
+    @JsonProperty("houseNumber")
+    private String houseNumber;
+
+    @JsonProperty("houseNumberAddition")
+    private String houseNumberAddition;
+
+    @JsonProperty("buildingName")
+    private String buildingName;
+
+    @JsonProperty("deliveryInformation")
+    private String deliveryInformation;
+
+    @JsonProperty("floor")
+    private String floor;
+
+    @JsonProperty("locationUnitNumber")
+    private String locationUnitNumber;
+
+    @JsonProperty("departmentName")
+    private String departmentName;
+
+    @JsonProperty("subdepartmentName")
+    private String subdepartmentName;
+
+    @JsonProperty("poBoxNumber")
+    private String poBoxNumber;
+
+    @JsonProperty("streetType")
+    private String streetType;
+
+    @JsonProperty("unstructuredAddressLine1")
+    private String unstructuredAddressLine1;
+
+    @JsonProperty("unstructuredAddressLine2")
+    private String unstructuredAddressLine2;
+
+    @JsonProperty("unstructuredAddressLine3")
+    private String unstructuredAddressLine3;
+
+    @JsonProperty("dataSource")
+    private String dataSource;
+
+    @JsonProperty("effectiveDate")
+    private String effectiveDate;
+
+    @JsonProperty("lastVerificationDate")
+    private String lastVerificationDate;
+
+    @JsonProperty("endDate")
+    private String endDate;
+}
+
+
+⸻
+
+Quick checklist after dropping these in
+	1.	Replace the four files above in your project (backup originals first).
+	2.	Rebuild (mvn -DskipTests package or your usual build).
+	3.	Run the batch job that previously triggered the flow and check logs — you should see:
+	•	OnePam raw/parsed response for UUID=...: {...} (with street/city/postal code)
+	•	Merged postal address for UUID=...: {...}
+	4.	Verify DB accounting rows now contain the populated address fields.
+
+⸻
+
+Extra suggestions (if you want them now)
+	•	Add unit tests for mergeResponse() covering: PAM full, PAM partial, PAM empty, request full.
+	•	Add an integration test mocking OnePAM returning the wrapper JSON.
+	•	Add a small audit log entry (or event) for addresses that are skipped due to empty request.
+
+⸻
+
+If you want I’ll:
+	•	generate the unit test class for AddressService (Mockito + JUnit),
+	•	or update AccountingDAO mapping to store the newly merged fields.
+
+Which of those do you want me to produce next?

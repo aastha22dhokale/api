@@ -1,0 +1,130 @@
+2025-12-01T16:13:25.159+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.repository.AccountingDAO       : Updated external ID for UUID=adee4ff2-d90f-444d-8488-d6244e33e4cb
+2025-12-01T16:13:25.163+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.datadist.api.service.AddressService  : Calling OnePAM with request: CreatePostalAddressRequest(postalAddressUsageType=BSN_ADR, countryCode=BE, cityName=, streetName=, houseNumber=, houseNumberAddition=, postalCode=, dataSource=null, effectiveDate=null, endDate=null)      
+2025-12-01T16:13:25.164+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : createPostalAddress request payload: CreatePostalAddr
+essRequest(postalAddressUsageType=BSN_ADR, countryCode=BE, cityName=, streetName=, houseNumber=, houseNumberAddition=, postalCode=, dataSource=null, effectiveDate=null, endDate=null)
+2025-12-01T16:13:25.165+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : --------------------------------------------------------------------------------------
+2025-12-01T16:13:25.165+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Demo_28_Nov_API Request Info
+2025-12-01T16:13:25.166+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Method: POST
+2025-12-01T16:13:25.167+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : URI: /v5/involved-parties/adee4ff2-d90f-444d-8488-d6244e33e4cb/postal-addresses
+2025-12-01T16:13:25.167+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Version: HTTP/1.1
+2025-12-01T16:13:25.168+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Demo_28_Nov_API updateExternalIdentifier request payl
+oad: UpdateExternalIdentifierOrganisationUnitRequest(involvedPartyExternalIdentifierType=KBO_BE, involvedPartyExternalIdentifierValue=3a80797c-0a36-4f73-b8dd-c5dc8f635fec, involved
+PartyExternalIdentifierStatusType=null, countryOfIssue=null, placeOfIssue=Hyderabad, dateOfIssue=null, expiryDate=null, dataSource=FOS_IT, effectiveDate=2025-12-01T10:40:13Z, endDate=2035-12-01T10:40:13Z)
+2025-12-01T16:13:25.168+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Header: Host: apis.ing.com
+2025-12-01T16:13:25.169+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Header: Content-Type: application/json;charset=UTF-8 
+2025-12-01T16:13:25.169+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : --------------------------------------------------------------------------------------
+2025-12-01T16:13:25.169+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Header: Content-Length: 143
+2025-12-01T16:13:25.170+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Header: X-ING-LastUpdateUser: X-ING-LastUpdateUser   
+2025-12-01T16:13:25.169+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Demo_28_Nov_API Request Info
+2025-12-01T16:13:25.170+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : Body: {"postalAddressUsageType":"BSN_ADR","countryCode":"BE","cityName":"","streetName":"","houseNumber":"","houseNumberAddition":"","postalCode":""}
+2025-12-01T16:13:25.170+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.service.OnePamRepository       : --------------------------------------------------------------------------------------
+2025-12-01T16:13:25.170+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Method: POST
+2025-12-01T16:13:25.172+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : URI: /v5/involved-parties/adee4ff2-d90f-444d-8488-d6244e33e4cb/external-identifiers
+2025-12-01T16:13:25.171+05:30 DEBUG 4100 --- [Integration-Module] [onPool-worker-6] c.i.a.t.c.t.h.r.HostAwareRoutingService  : Routing request 1888137719 for host header: apis.ing.com
+2025-12-01T16:13:25.172+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Version: HTTP/1.1
+2025-12-01T16:13:25.173+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Header: Host: apis.ing.com
+2025-12-01T16:13:25.173+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Header: Content-Type: application/json;charset=UTF-8 
+2025-12-01T16:13:25.174+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Header: Content-Length: 247
+2025-12-01T16:13:25.174+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Header: X-ING-LastUpdateUser: IN_ADMIN
+2025-12-01T16:13:25.175+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : Body: {"involvedPartyExternalIdentifierType":"KBO_BE"
+,"involvedPartyExternalIdentifierValue":"3a80797c-0a36-4f73-b8dd-c5dc8f635fec","placeOfIssue":"Hyderabad","dataSource":"FOS_IT","effectiveDate":"2025-12-01T10:40:13Z","endDate":"2035-12-01T10:40:13Z"}
+2025-12-01T16:13:25.175+05:30 DEBUG 4100 --- [Integration-Module] [onPool-worker-6] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Sending request [1089964245:None] to instance [Inet(1
+72-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.6:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
+POST /v5/involved-parties/adee4ff2-d90f-444d-8488-d6244e33e4cb/postal-addresses HTTP/1.1
+Host: apis.ing.com
+X-B3-SpanId: fdf6e167a31ee380
+Content-Type: application/json;charset=UTF-8
+X-B3-TraceId: fdf6e167a31ee380
+Content-Length: 143
+X-ING-LastUpdateUser: X-ING-LastUpdateUser
+
+{"postalAddressUsageType":"BSN_ADR","countryCode":"BE","cityName":"","streetName":"","houseNumber":"","houseNumberAddition":"","postalCode":""}
+2025-12-01T16:13:25.175+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-3] c.i.d.api.service.OnePamRepository       : --------------------------------------------------------------------------------------
+2025-12-01T16:13:25.177+05:30 DEBUG 4100 --- [Integration-Module] [onPool-worker-3] c.i.a.t.c.t.h.r.HostAwareRoutingService  : Routing request 335528971 for host header: apis.ing.com
+2025-12-01T16:13:25.180+05:30 DEBUG 4100 --- [Integration-Module] [onPool-worker-3] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Sending request [1133581463:None] to instance [Inet(1
+72-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.11:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,InvolvedPartyAPI)))] with contents
+POST /v5/involved-parties/adee4ff2-d90f-444d-8488-d6244e33e4cb/external-identifiers HTTP/1.1
+Host: apis.ing.com
+X-B3-SpanId: dab6b57aa6135b7f
+Content-Type: application/json;charset=UTF-8
+X-B3-TraceId: dab6b57aa6135b7f
+Content-Length: 247
+X-ING-LastUpdateUser: IN_ADMIN
+
+{"involvedPartyExternalIdentifierType":"KBO_BE","involvedPartyExternalIdentifierValue":"3a80797c-0a36-4f73-b8dd-c5dc8f635fec","placeOfIssue":"Hyderabad","dataSource":"FOS_IT","effectiveDate":"2025-12-01T10:40:13Z","endDate":"2035-12-01T10:40:13Z"}
+2025-12-01T16:13:25.342+05:30 DEBUG 4100 --- [Integration-Module] [gle/netty4-1-19] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [837021324] to request [944117895:N
+one] from instance [Inet(172-21-5-20.tp-sea-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.6:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-20.tp-sea-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,PartyandAgreementSearchAPI)))] with contents
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2025 10:43:24 GMT
+traceparent: 00-ba82a79e9e3bf042fcd17cdf979d42f9-c444530efb7f29f7-01
+Content-Type: application/json
+Content-Length: 60
+
+{"organisationUnits":[],"offset":0,"totalNumberOfResults":0}
+2025-12-01T16:13:25.343+05:30  INFO 4100 --- [Integration-Module] [gle/netty4-1-19] c.i.d.api.service.OnePamRepository       : searchInvolvedPartyByInternalIdentifier response: Response("HTTP/1.1 Status(200)")
+2025-12-01T16:13:25.344+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Demo_28_Nov_API Start of fetchByOrgNumber
+2025-12-01T16:13:25.345+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetching organisation unit config for Org Number: '216b1838-bc89-482e-919c-4b44e4daf3d0'
+2025-12-01T16:13:25.395+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetched 0 record(s) from DD_COFACEOPS_TBL by Org Number
+2025-12-01T16:13:25.395+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : End of fetchByOrgNumber
+2025-12-01T16:13:25.395+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Demo_28_Nov_API Start of fetchByOrgNumber
+2025-12-01T16:13:25.396+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetching organisation unit config for Org Number: '216b1838-bc89-482e-919c-4b44e4daf3d0'
+2025-12-01T16:13:25.397+05:30 DEBUG 4100 --- [Integration-Module] [gle/netty4-1-39] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [1160000128] to request [1133581463
+:None] from instance [Inet(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net/10.219.120.11:8443,Map(instanceMetadata -> InstanceMetadata(172-21-5-22.tp-ivp-tst.pod.cluster0046.non-prod.ichp.ing.net,8443,DCR,ModeLive,InvolvedPartyAPI)))] with contents
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2025 10:43:24 GMT
+Pragma: no-cache
+traceparent: 00-39566a085dcb2fa78eabf28c24a8ca76-c18f09dc14fa79e6-01
+Content-Type: application/json
+Cache-Control: no-store
+Content-Length: 585
+
+{
+  "involvedPartyExternalIdentifier" : {
+    "involvedPartyExternalIdentifierType" : "KBO_BE",
+    "involvedPartyExternalIdentifierValue" : "3a80797c-0a36-4f73-b8dd-c5dc8f635fec",
+    "placeOfIssue" : "Hyderabad",
+    "dataSource" : "FOS_IT",
+    "effectiveDate" : "2025-12-01T10:40:13.000Z",
+    "endDate" : "2035-12-01T10:40:13.000Z",
+    "lastUpdateUser" : "IN_ADMIN",
+    "lastUpdateDate" : "2025-12-01T10:43:24.477Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/adee4ff2-d90f-444d-8488-d6244e33e4cb/external-identifiers"
+    }
+  }
+}
+2025-12-01T16:13:25.404+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetched 0 record(s) from DD_COFACEOPS_TBL by Org Number
+2025-12-01T16:13:25.404+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : End of fetchByOrgNumber
+2025-12-01T16:13:25.419+05:30 DEBUG 4100 --- [Integration-Module] [gle/netty4-1-29] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [1073647513] to request [1089964245
+:None] from instance [Inet(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.6:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2025 10:43:24 GMT
+Pragma: no-cache
+traceparent: 00-bf2058bc1e2fca4efeb512d919430526-43030184f42d3472-01
+Content-Type: application/json
+Cache-Control: no-store
+Content-Length: 397
+
+{
+  "postalAddress" : {
+    "postalAddressUsageType" : "BSN_ADR",
+    "countryCode" : "BE",
+    "lastUpdateUser" : "X-ING-LastUpdateUser",
+    "lastUpdateDate" : "2025-12-01T10:43:24.491Z",
+    "effectiveDate" : "2025-12-01T10:43:24.426Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/adee4ff2-d90f-444d-8488-d6244e33e4cb/postal-addresses"
+    }
+  }
+}
+2025-12-01T16:13:25.421+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.datadist.api.service.AddressService  : Final address for DB insert: PostalAddressResponse(po
+stalAddressUsageType=BSN_ADR, countryCode=BE, countryRegionCode=null, districtName=null, cityName=, postalCode=, streetName=, houseNumber=, houseNumberAddition=, effectiveDate=2025-12-01T10:43:24.426Z, endDate=null)
+2025-12-01T16:13:25.424+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Demo_28_Nov_API Start of fetchByOrgNumber
+2025-12-01T16:13:25.424+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetching organisation unit config for Org Number: '216b1838-bc89-482e-919c-4b44e4daf3d0'
+2025-12-01T16:13:25.428+05:30  INFO 4100 --- [Integration-Module] [onPool-worker-6] c.i.d.api.repository.AccountingDAO       : Postal Address inserted for UUID=adee4ff2-d90f-444d-8488-d6244e33e4cb
+2025-12-01T16:13:25.431+05:30 DEBUG 4100 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetched 0 record(s) from DD_COFACEOPS_TBL by Org Number
+

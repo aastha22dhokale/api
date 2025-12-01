@@ -1,0 +1,407 @@
+2025-12-01T16:56:25.474+05:30 DEBUG 25440 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetched 0 record(s) from DD_COFACEOPS_TBL by Org Number
+2025-12-01T16:56:25.475+05:30 DEBUG 25440 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : End of fetchByOrgNumber
+2025-12-01T16:56:25.475+05:30 DEBUG 25440 --- [Integration-Module] [gle/netty4-1-12] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [1314063486] to request [135714512
+8:None] from instance [Inet(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.11:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2025 11:26:24 GMT
+Pragma: no-cache
+traceparent: 00-5c2339b20517bb3eba4ccb9047464901-f257d6815aad4ded-01
+Content-Type: application/json
+Cache-Control: no-store
+Content-Length: 397
+
+{
+  "postalAddress" : {
+    "postalAddressUsageType" : "BSN_ADR",
+    "countryCode" : "BE",
+    "lastUpdateUser" : "X-ING-LastUpdateUser",
+    "lastUpdateDate" : "2025-12-01T11:26:24.580Z",
+    "effectiveDate" : "2025-12-01T11:26:24.528Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/5082e22b-61df-4178-a1b6-65686a0add57/postal-addresses"
+    }
+  }
+}
+2025-12-01T16:56:25.476+05:30 DEBUG 25440 --- [Integration-Module] [gle/netty4-1-12] c.i.d.api.service.OnePamRepository       : createPostalAddress response body: {
+  "postalAddress" : {
+    "postalAddressUsageType" : "BSN_ADR",
+    "countryCode" : "BE",
+    "lastUpdateUser" : "X-ING-LastUpdateUser",
+    "lastUpdateDate" : "2025-12-01T11:26:24.580Z",
+    "effectiveDate" : "2025-12-01T11:26:24.528Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/5082e22b-61df-4178-a1b6-65686a0add57/postal-addresses"
+    }
+  }
+}
+2025-12-01T16:56:25.478+05:30 ERROR 25440 --- [Integration-Module] [nPool-worker-11] c.i.d.a.service.OrganisationUnitService  : Postal address create failed for UUID=5082e22b-61df-4178-a1b6-65686a0add57 : Cannot invoke "com.ing.datadist.configreader.CofaceOpsConfigReader.getPostalAddressByOpsUuid(String)" because "this.configReader" is null
+
+java.lang.NullPointerException: Cannot invoke "com.ing.datadist.configreader.CofaceOpsConfigReader.getPostalAddressByOpsUuid(String)" because "this.configReader" is null
+        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:45) ~[classes/:na]
+        at com.ing.datadist.api.service.OrganisationUnitService.lambda$processOrganisationUnit$1(OrganisationUnitService.java:156) ~[classes/:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[na:na]
+
+2025-12-01T16:56:25.496+05:30 DEBUG 25440 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Demo_28_Nov_API Start of fetchByOrgNumber
+2025-12-01T16:56:25.496+05:30 DEBUG 25440 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetching organisation unit config for Org Number: '46ab69ff-bec2-432f-8884-cc356070a368'
+2025-12-01T16:56:25.510+05:30 DEBUG 25440 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : Fetched 0 record(s) from DD_COFACEOPS_TBL by Org Number
+2025-12-01T16:56:25.510+05:30 DEBUG 25440 --- [Integration-Module] [   scheduling-1] c.i.d.c.CofaceOpsConfigReader            : End of fetchByOrgNumber
+2025-12-01T16:56:25.515+05:30  INFO 25440 --- [Integration-Module] [   scheduling-1] c.i.d.api.repository.AccountingDAO       : Created ou account table entry for UUID=46ab69ff-bec2-432f-8884-cc356070a368
+2025-12-01T16:56:25.521+05:30  INFO 25440 --- [Integration-Module] [   scheduling-1] c.i.d.api.service.OnePamRepository       : Demo_28_Nov_API createInvolvedParty request payload:
+ CreateInvolvedPartyRequestV5(organisationUnit=CreateOrganisationUnitRequest(dataSource=FOS_IT, logicalDataDomain=ING_BE_EXT_DATA, countryOfResidence=null, preferredLanguage=fr, fi
+nancialLegalStatusType=null, channelOfEntry=MOB_CHAN, effectiveDate=null, endDate=null, organisationUnitStructureType=MAND_USR_GRP, organisationUnitNames=[CreateOrganisationUnitNameRequest(organisationUnitNameType=OU_NM, organisat
+
+
+package com.ing.datadist.api.repository;
+
+import com.ing.datadist.api.model.*;
+import com.ing.datadist.kafka.consumer.service.PostalAddressService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+
+@Repository
+@Slf4j
+public class AccountingDAO {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final PostalAddressService postalAddressService;
+
+    public AccountingDAO(JdbcTemplate jdbcTemplate, PostalAddressService postalAddressService) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.postalAddressService = postalAddressService;
+    }
+
+    public void updateExternalIdentifier(String uuid, String externalId) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET ORG_NUMBER = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, externalId, Timestamp.from(Instant.now()), uuid);
+        log.info("Updated external ID for UUID={}", uuid);
+    }
+
+
+    public void updateOrganisationUnitName(String uuid, String organisationUnitName) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET FIRST_NAME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, organisationUnitName, uuid);
+        log.info(" Organisation unit name updated for UUID={}", uuid);
+    }
+
+    public void updatePostalAddress(String uuid, String street, String houseNumber,
+                                    String houseNumberAddition, String postalCode,
+                                    String locality, String countryCode) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET ADDR_STREET_NAME = ?, ADDR_HOUSE_NUMBER = ?, ADDR_BOX_NUMBER = ?, ADDR_POSTAL_CODE = ?, ADDR_LOCALITY_NAME = ?, ADDR_COUNTRY_CODE = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, street, houseNumber, houseNumberAddition, postalCode, locality, countryCode, Timestamp.from(Instant.now()), uuid);
+        log.info("Postal Address updated for UUID={}", uuid);
+    }
+
+    public void updateDigitalAddress(String uuid, String digitalAddress) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET DIGITAL_ADDRESS = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, digitalAddress, Timestamp.from(Instant.now()), uuid);
+        log.info("Digital Address updated for UUID={}", uuid);
+    }
+
+    public void updateHierarchy(String uuid, String parentId) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET PARENT_ORG_UUID = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, parentId, Timestamp.from(Instant.now()), uuid);
+        log.info("Hierarchy updated for UUID={}", uuid);
+    }
+
+    public void createOuAccountingTableEntry(String ddUuid,String OuName) {
+        String eventId = "null";
+        String sql = "INSERT INTO DD_ACCOUNT_TBL(DD_UUID,FIRST_NAME, EVENT_ID) VALUES (?,?,?)";
+        jdbcTemplate.update(sql,ddUuid,OuName, eventId);
+        log.info("Created ou account table entry for UUID={}", ddUuid);
+    }
+
+    public void insertFullOrganisationUnit(CreateInvolvedPartyResponseV5 response) {
+        InvolvedPartiesOrganisationUnitResponse orgUnit = response.getOrganisationUnit();
+
+        String ddUuid = orgUnit.getInvolvedPartyInternalIdentifiers().get(0).getInvolvedPartyInternalIdentifierValue();
+        String eventId = "null";
+        String typeOfEntity = "ORG_UNIT";
+        String orgName = orgUnit.getOrganisationUnitNames().get(0).getOrganisationUnitName();
+        Timestamp updatedTime = Timestamp.from(Instant.now());
+
+        String sql = "INSERT INTO DD_ACCOUNT_TBL (DD_UUID, EVENT_ID, TYP_OF_ENTY, FIRST_NAME, UPDATED_TIME) VALUES (?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, ddUuid, eventId, typeOfEntity, orgName, updatedTime);
+
+        log.info("Inserted organisation unit record: UUID={}, EVENT_ID={}, ORG_NAME={}", ddUuid, eventId, orgName);
+    }
+
+//public void insertPostalAddress(String uuid, PostalAddressResponse adr) {
+//
+//    Timestamp effectiveTimestamp = null;
+//
+//    if (adr.getEffectiveDate() != null) {
+//
+//        // Parse ISO string to Instant then to Timestamp
+//
+//        Instant instant = Instant.parse(adr.getEffectiveDate());
+//
+//        effectiveTimestamp = Timestamp.from(instant);
+//
+//    }
+//    String eventId = "null";
+//
+//    String sql = "INSERT INTO DD_ACCOUNT_TBL (" +
+//
+//            "DD_UUID, EVENT_ID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, " +
+//
+//            "ADDR_POSTAL_CODE, ADDR_COUNTRY_CODE, ADDR_LOCALITY_NAME, UPDATED_TIME" +
+//
+//            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+//
+//    jdbcTemplate.update(sql,
+//
+//            uuid,
+//            eventId,
+//            adr.getStreetName(),
+//
+//            adr.getHouseNumber(),
+//
+//            adr.getHouseNumberAddition(),
+//
+//            adr.getPostalCode(),
+//
+//            adr.getCountryCode(),
+//
+//            adr.getCityName(),
+//
+//            effectiveTimestamp != null ? effectiveTimestamp : new Timestamp(System.currentTimeMillis())
+//
+//    );
+//
+//    log.info("Postal Address inserted for UUID={}", uuid);
+//
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+    public void insertPostalAddress(String uuid, PostalAddressResponse adr, Timestamp ts) {
+
+        if (uuid == null || uuid.isEmpty()) return;
+
+        String eventId = "null";
+
+        // Try UPDATE first
+        String updateSql = "UPDATE DD_ACCOUNT_TBL SET " +
+                "EVENT_ID = ?, " +
+                "ADDR_STREET_NAME = ?, " +
+                "ADDR_HOUSE_NUMBER = ?, " +
+                "ADDR_BOX_NUMBER = ?, " +
+                "ADDR_POSTAL_CODE = ?, " +
+                "ADDR_LOCALITY_NAME = ?, " +
+                "ADDR_COUNTRY_CODE = ?, " +
+                "UPDATED_TIME = ? " +
+                "WHERE DD_UUID = ?";
+
+        int rows = jdbcTemplate.update(updateSql,
+                eventId,
+                adr.getStreetName(),
+                adr.getHouseNumber(),
+                adr.getHouseNumberAddition(),
+                adr.getPostalCode(),
+                adr.getCityName(),
+                adr.getCountryCode(),
+                ts,
+                uuid);
+
+        if (rows > 0) {
+            log.info("Updated postal address for UUID={}", uuid);
+            return;
+        }
+
+        // INSERT if no row existed
+        String insertSql = "INSERT INTO DD_ACCOUNT_TBL (" +
+                "DD_UUID, EVENT_ID, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, " +
+                "ADDR_POSTAL_CODE, ADDR_LOCALITY_NAME, ADDR_COUNTRY_CODE, UPDATED_TIME" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        jdbcTemplate.update(insertSql,
+                uuid,
+                eventId,
+                adr.getStreetName(),
+                adr.getHouseNumber(),
+                adr.getHouseNumberAddition(),
+                adr.getPostalCode(),
+                adr.getCityName(),
+                adr.getCountryCode(),
+                ts
+        );
+
+        log.info("Inserted postal address for UUID={}", uuid);
+    }
+
+
+//
+//
+//public void insertPostalAddress(String uuid, PostalAddressResponse adr, Timestamp effectiveTimestamp) {
+//    if (uuid == null || uuid.trim().isEmpty()) {
+//        log.warn("insertPostalAddress called with empty uuid, skipping");
+//        return;
+//    }
+//String eventId = "null";
+//        ;
+//    Timestamp ts = effectiveTimestamp != null ? effectiveTimestamp : new Timestamp(System.currentTimeMillis());
+//
+//    // try update first
+//    String updateSql = "UPDATE DD_ACCOUNT_TBL SET " +
+//            "EVENT_ID = ?, " +
+//            "ADDR_STREET_NAME = ?, " +
+//            "ADDR_HOUSE_NUMBER = ?, " +
+//            "ADDR_BOX_NUMBER = ?, " +
+//            "ADDR_POSTAL_CODE = ?, " +
+//            "ADDR_LOCALITY_NAME = ?, " +
+//            "ADDR_COUNTRY_CODE = ?, " +
+//            "UPDATED_TIME = ? " +
+//            "WHERE DD_UUID = ?";
+//
+//    int updated = jdbcTemplate.update(updateSql,
+//            eventId,
+//            adr.getStreetName(),
+//            adr.getHouseNumber(),
+//            adr.getHouseNumberAddition(),
+//            adr.getPostalCode(),
+//            adr.getCityName(),
+//            adr.getCountryCode(),
+//            ts,
+//            uuid);
+//
+//    if (updated > 0) {
+//        log.info("Updated postal address row for UUID={}", uuid);
+//        return;
+//    }
+//
+//    // if update affected 0 rows -> insert
+//    String insertSql = "INSERT INTO DD_ACCOUNT_TBL (" +
+//            "DD_UUID, EVENT_ID ,ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, " +
+//            "ADDR_POSTAL_CODE, ADDR_LOCALITY_NAME, ADDR_COUNTRY_CODE, UPDATED_TIME" +
+//            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+//
+//    jdbcTemplate.update(insertSql,
+//            uuid,
+//            eventId,
+//            adr.getStreetName(),
+//            adr.getHouseNumber(),
+//            adr.getHouseNumberAddition(),
+//            adr.getPostalCode(),
+//            adr.getCityName(),
+//            adr.getCountryCode(),
+//            ts);
+//
+//    log.info("Inserted postal address row for UUID={}", uuid);
+//}
+//
+
+    // ... keep rest of DAO methods unchanged (updateExternalIdentifier, createOuAccountingTableEntry etc.) ...
+}
+
+
+
+
+package com.ing.datadist.api.service;
+
+import com.ing.datadist.api.model.CofaceTableAddress;
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.CreatePostalAddressResponse;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import com.ing.datadist.api.repository.AccountingDAO;
+import com.ing.datadist.configreader.CofaceOpsConfigReader;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
+@Service
+@Slf4j
+public class AddressService {
+
+    private final OnePamRepository repository;
+    private final AccountingDAO accountingDAO;
+    private CofaceOpsConfigReader configReader;
+
+    public AddressService(OnePamRepository repository, AccountingDAO accountingDAO) {
+        this.repository = repository;
+        this.accountingDAO = accountingDAO;
+//        this.configReader = configReader;
+    }
+
+
+    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
+
+        log.info("Calling OnePAM with request: {}", request);
+
+        CreatePostalAddressResponse wrapper = repository.createPostalAddress(uuid, request).join();
+        if (wrapper == null || wrapper.getPostalAddress() == null) {
+            log.warn("OnePAM returned empty response for UUID={}", uuid);
+            return null;
+        }
+
+        PostalAddressResponse pam = wrapper.getPostalAddress();
+
+        // 🔥 Fetch missing values from CofaceOps
+        CofaceTableAddress ops = configReader.getPostalAddressByOpsUuid(uuid);
+
+        // 🔥 Final merged address — OnePAM overrides only if not blank
+        PostalAddressResponse merged = PostalAddressResponse.builder()
+                .postalAddressUsageType(pam.getPostalAddressUsageType())
+                .effectiveDate(pam.getEffectiveDate())
+                .endDate(pam.getEndDate())
+
+                .streetName(!isBlank(pam.getStreetName()) ? pam.getStreetName() : ops.getStreetName())
+                .houseNumber(!isBlank(pam.getHouseNumber()) ? pam.getHouseNumber() : ops.getHouseNumber())
+                .houseNumberAddition(!isBlank(pam.getHouseNumberAddition()) ? pam.getHouseNumberAddition() : ops.getHouseAddition())
+                .postalCode(!isBlank(pam.getPostalCode()) ? pam.getPostalCode() : ops.getPostalCode())
+                .cityName(!isBlank(pam.getCityName()) ? pam.getCityName() : ops.getCityName())
+                .countryCode(!isBlank(pam.getCountryCode()) ? pam.getCountryCode() : ops.getCountryCode())
+                .build();
+
+        log.info("Merged postal address = {}", merged);
+
+        Timestamp ts = null;
+        try {
+            ts = pam.getEffectiveDate() != null ? Timestamp.from(Instant.parse(pam.getEffectiveDate())) : Timestamp.from(Instant.now());
+        } catch (Exception ex) {
+            ts = Timestamp.from(Instant.now());
+        }
+
+        accountingDAO.insertPostalAddress(uuid, merged, ts);
+
+        return merged;
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+}
+
+
+
+
+
+
+
+

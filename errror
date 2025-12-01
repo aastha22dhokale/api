@@ -1,0 +1,576 @@
+{"organisationUnit":{"dataSource":"FOS_IT","logicalDataDomain":"ING_BE_EXT_DATA","preferredLanguage":"fr","channelOfEntry":"MOB_CHAN","organisationUnitStructureType":"MAND_USR_GRP","organisationUnitNames":[{"organisationUnitNameType":"OU_NM","organisationUnitName":"BALA CORPORATION"}]}}
+2025-12-01T14:53:24.774+05:30 DEBUG 35644 --- [Integration-Module] [gle/netty4-1-28] c.i.a.t.c.t.c.f.f.DebugLoggingFilter     : Received response [1756271166] to request [935648834
+:None] from instance [Inet(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net/10.219.252.10:8443,Map(instanceMetadata -> InstanceMetadata(172-20-18-62.tp-ivp-tst.pod.cluster0047.non-prod.ichp.ing.net,8443,WPR,ModeLive,InvolvedPartyAPI)))] with contents
+HTTP/1.1 200 OK
+Date: Mon, 01 Dec 2025 09:23:23 GMT
+Pragma: no-cache
+traceparent: 00-fa825ccab9f2627f0b5dfc7f01bc5584-dc38056b4be86c89-01
+Content-Type: application/json
+Cache-Control: no-store
+Content-Length: 397
+
+{
+  "postalAddress" : {
+    "postalAddressUsageType" : "BSN_ADR",
+    "countryCode" : "BE",
+    "lastUpdateUser" : "X-ING-LastUpdateUser",
+    "lastUpdateDate" : "2025-12-01T09:23:23.825Z",
+    "effectiveDate" : "2025-12-01T09:23:23.743Z"
+  },
+  "_links" : {
+    "self" : {
+      "href" : "https://apis.ing.com/v5/involved-parties/55be7720-e5db-4530-afd5-fa3d04ff0fd8/postal-addresses"
+    }
+  }
+}
+2025-12-01T14:53:24.775+05:30  INFO 35644 --- [Integration-Module] [onPool-worker-5] c.i.datadist.api.service.AddressService  : Received postalAddress: PostalAddressResponse(postal
+AddressUsageType=BSN_ADR, countryCode=BE, countryRegionCode=null, districtName=null, cityName=null, postalCode=null, streetName=null, houseNumber=null, houseNumberAddition=null, effectiveDate=2025-12-01T09:23:23.743Z, endDate=null)
+2025-12-01T14:53:24.776+05:30 ERROR 35644 --- [Integration-Module] [onPool-worker-5] c.i.d.a.service.OrganisationUnitService  : Postal address create failed for UUID=55be7720-e5db-4530-afd5-fa3d04ff0fd8 : Timestamp format must be yyyy-mm-dd hh:mm:ss[.fffffffff]
+
+java.lang.IllegalArgumentException: Timestamp format must be yyyy-mm-dd hh:mm:ss[.fffffffff]
+        at java.sql/java.sql.Timestamp.valueOf(Timestamp.java:196) ~[java.sql:na]
+        at com.ing.datadist.api.repository.AccountingDAO.insertPostalAddress(AccountingDAO.java:105) ~[classes/:na]
+        at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+        at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+        at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-6.2.8.jar:6.2.8]
+        at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.2.8.jar:6.2.8]
+        at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.2.8.jar:6.2.8]
+        at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:138) ~[spring-tx-6.2.8.jar:6.2.8]      
+        at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.2.8.jar:6.2.8]
+        at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728) ~[spring-aop-6.2.8.jar:6.2.8]
+        at com.ing.datadist.api.repository.AccountingDAO$$SpringCGLIB$$0.insertPostalAddress(<generated>) ~[classes/:na]
+        at com.ing.datadist.api.service.AddressService.createPostalAddress(AddressService.java:49) ~[classes/:na]
+        at com.ing.datadist.api.service.OrganisationUnitService.lambda$processOrganisationUnit$1(OrganisationUnitService.java:177) ~[classes/:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+        at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[na:na]
+        at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[na:na]
+
+package com.ing.datadist.api.service;
+
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.CreatePostalAddressResponse;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import com.ing.datadist.api.repository.AccountingDAO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.ExecutionException;
+
+
+@Service
+
+@Slf4j
+
+public class AddressService {
+
+    private final OnePamRepository repository;
+
+    private final AccountingDAO accountingDAO;
+
+    public AddressService(OnePamRepository repository, AccountingDAO accountingDAO) {
+
+        this.repository = repository;
+
+        this.accountingDAO = accountingDAO;
+
+    }
+
+    public PostalAddressResponse createPostalAddress(String uuid, CreatePostalAddressRequest request) {
+
+        log.info("Calling OnePAM with request: {}", request);
+
+        // Call repository and get wrapped response
+
+        CreatePostalAddressResponse responseWrapper = repository.createPostalAddress(uuid, request)
+
+                .join(); // wait for async completion
+
+        // Extract the postalAddress object from wrapper
+
+        PostalAddressResponse postalAddress = responseWrapper.getPostalAddress();
+
+        log.info("Received postalAddress: {}", postalAddress);
+
+        // Insert into DB
+
+        accountingDAO.insertPostalAddress(uuid, postalAddress);
+
+        return postalAddress;
+
+    }
+
+}
+package com.ing.datadist.api.service;
+
+import com.ing.datadist.api.model.*;
+import com.ing.datadist.api.repository.AccountingDAO;
+import com.ing.datadist.batch.repository.MappingDAO;
+import com.ing.datadist.configreader.CofaceOpsConfigReader;
+import com.ing.datadist.kafka.util.EventTransactionType;
+import com.ing.datadist.kafka.util.NotificationStatus;
+import com.twitter.finagle.http.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import static com.ing.datadist.api.utils.DataDistributionConstants.*;
+
+@Service
+@Slf4j
+public class OrganisationUnitService {
+
+    private final OnePamRepository onePamRepository;
+    private final CofaceOpsConfigReader configReader;
+    private final AddressService addressService;
+    private final DigitalAddrService digitalAddrService;
+    private final AccountingDAO accountingDAO;
+    private final MappingDAO mappingDAO;
+
+    Instant effectiveDateSet = Instant.now()
+            .minusSeconds(120) // safety margin
+            .truncatedTo(ChronoUnit.SECONDS);
+
+    Instant endDateSet = effectiveDateSet.plus(3652, ChronoUnit.DAYS);
+
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    public OrganisationUnitService(OnePamRepository onePamRepository,
+                                   CofaceOpsConfigReader configReader,
+                                   AddressService addressService,
+                                   DigitalAddrService digitalAddrService,
+                                   AccountingDAO accountingDAO,
+                                   MappingDAO mappingDAO) {
+        this.onePamRepository = onePamRepository;
+        this.configReader = configReader;
+        this.addressService = addressService;
+        this.digitalAddrService = digitalAddrService;
+        this.accountingDAO = accountingDAO;
+        this.mappingDAO = mappingDAO;
+    }
+
+
+    public void processOrganisationUnit(String orgNumber) {
+        Map<String, String> config = getConfig(orgNumber);
+
+        // Build requests from config
+        CreatePostalAddressRequest postalRequest = CreatePostalAddressRequest.builder()
+                .streetName(config.getOrDefault("ADR_POSTALADDRESS_STREETNM", ""))
+                .houseNumber(config.getOrDefault("ADR_POSTALADDRESS_HOUSENUM", ""))
+                .houseNumberAddition(config.getOrDefault("ADR_POSTALADDRESS_HOUSEADD", ""))
+                .postalCode(config.getOrDefault("ADR_POSTALADDRESS_POSTALCD", ""))
+                .cityName(config.getOrDefault("ADR_POSTALADDRESS_CITYNAME", ""))
+                .countryCode(config.getOrDefault("ADR_POSTALADDRESS_CNTRYCD", "BE"))
+                .postalAddressUsageType("BSN_ADR")
+                .build();
+
+        CreateDigitalAddressV5Request digitalRequest = CreateDigitalAddressV5Request.builder()
+                .fullDigitalAddress(config.getOrDefault("ADR_DIGITALADDR_EMAIL", ""))
+             //   .telephone(config.getOrDefault("ADR_DIGITALADDR_FULLTEL", ""))
+               // .foreignTelephone(config.getOrDefault("ADR_DIGITALADDR_FULLTELFGN", ""))
+                .usageType("BSN_ADR")
+                .build();
+       // CreateDigitalAddressV5Request digitalRequest = new CreateDigitalAddressV5Request("", "", "", "");
+
+//        UpdateExternalIdentifierOrganisationUnitRequest externalIdRequest = buildUpdateRequest(orgNumber, config);
+        UpdateExternalIdentifierOrganisationUnitRequest externalIdRequest = new UpdateExternalIdentifierOrganisationUnitRequest();
+
+        CreateOrganisationUnitRequest orgUnitRequest = CreateOrganisationUnitRequest.builder().build();
+
+        // Pass populated requests to parallel logic
+        processOrganisationUnit(orgNumber, postalRequest, digitalRequest, externalIdRequest, orgUnitRequest);
+    }
+
+
+//
+//    public void processOrganisationUnit(String orgNumber) {
+//        CreatePostalAddressRequest postalRequest = new CreatePostalAddressRequest();
+//        UpdateExternalIdentifierOrganisationUnitRequest externalIdRequest = new UpdateExternalIdentifierOrganisationUnitRequest();
+//        CreateOrganisationUnitRequest orgUnitRequest = new CreateOrganisationUnitRequest();
+////
+//         CreateDigitalAddressV5Request digitalRequest = new CreateDigitalAddressV5Request("", "", "", "");
+//
+//        processOrganisationUnit(orgNumber, postalRequest, digitalRequest, externalIdRequest, orgUnitRequest);
+//    }
+
+    public void processOrganisationUnit(String orgNumber,
+                                        CreatePostalAddressRequest postalRequest,
+                                        CreateDigitalAddressV5Request digitalRequest,
+                                        UpdateExternalIdentifierOrganisationUnitRequest externalIdRequest,
+                                        CreateOrganisationUnitRequest orgUnitRequest) {
+
+        Map<String, String> config = getConfig(orgNumber);
+
+        String uuid = "";
+        CreateInvolvedPartyResponseV5 response = createOrganisationUnit(orgNumber);
+        accountingDAO.insertFullOrganisationUnit(response);
+        InvolvedPartiesOrganisationUnitResponse getOrganisationUnit = response.getOrganisationUnit();
+        List<InternalIdentifierResponse> involvedPartyInternalIdentifiers = getOrganisationUnit.getInvolvedPartyInternalIdentifiers();
+        for (InternalIdentifierResponse internalIdentifierResponse : involvedPartyInternalIdentifiers ) {
+            uuid = internalIdentifierResponse.getInvolvedPartyInternalIdentifierValue();
+        }
+        log.info("Involved Party Internal Identifiers : " + uuid);
+        if (uuid == null || uuid.isBlank() || uuid.isEmpty()) {
+            log.warn("No involvedPartyIdentifier found in response. Skipping OU flow.");
+            return;
+        }
+
+        UpdateExternalIdentifierOrganisationUnitRequest updateRequest = buildUpdateRequest(orgNumber);
+        String finalUuid = uuid;
+        log.info("final uuid: " + finalUuid);
+        CompletableFuture<Void> updateExternalIdentifierAsync = CompletableFuture.runAsync(() -> {
+            try {
+                accountingDAO.updateExternalIdentifier(finalUuid, updateRequest.getInvolvedPartyExternalIdentifierValue());
+                mappingDAO.insertEventTrack(finalUuid, "OrganisationUpdateExternalIdentifierAPI",
+                        EventTransactionType.CREATE_ORG_UNIT.getLabel(), NotificationStatus.PENDING.name());
+
+                Response responseUpdateExternalIdentifier =
+                onePamRepository.updateExternalIdentifier(finalUuid, updateRequest).get();
+
+                if(responseUpdateExternalIdentifier.statusCode() >= 200 && responseUpdateExternalIdentifier.statusCode() < 300) {
+                    mappingDAO.insertEventTrack(finalUuid, "OrganisationUpdateExternalIdentifierAPI",
+                            EventTransactionType.CREATE_ORG_UNIT.getLabel(), NotificationStatus.RECEIVED.name());
+                }else{
+                    log.error("Failed to update external identifier for external identifier: " + finalUuid);
+                }
+
+            } catch (Exception e) {
+                log.error("External ID update failed for UUID={} : {}", finalUuid, e.getMessage(), e);
+            }
+        });
+        String finalUuid1 = uuid;
+
+        CompletableFuture<Void> createPostalAddressAsync = CompletableFuture.runAsync(() -> {
+
+            try {
+
+                // Pre-insert/update: only table-relevant fields
+
+                accountingDAO.updatePostalAddress(finalUuid1,
+
+                        postalRequest.getStreetName(),
+
+                        postalRequest.getHouseNumber(),
+
+                        postalRequest.getHouseNumberAddition(),
+
+                        postalRequest.getPostalCode(),
+
+                        postalRequest.getCityName(),
+
+                        postalRequest.getCountryCode());
+
+                mappingDAO.insertEventTrack(finalUuid1, "OrganisationUnitPostalAddressAPI",
+
+                        EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(),
+
+                        NotificationStatus.PENDING.name());
+
+                // Call AddressService -> returns PostalAddressResponse from wrapper
+
+                PostalAddressResponse addr = addressService.createPostalAddress(finalUuid1, postalRequest);
+
+                if (addr != null) {
+
+                    // Update DB with the API-returned values (ensures consistency with OnePAM)
+
+                    accountingDAO.updatePostalAddress(finalUuid1,
+
+                            addr.getStreetName(),
+
+                            addr.getHouseNumber(),
+
+                            addr.getHouseNumberAddition(),
+
+                            addr.getPostalCode(),
+
+                            addr.getCityName(),
+
+                            addr.getCountryCode());
+
+                    log.info("Postal address created for UUID={}", finalUuid1);
+
+                    mappingDAO.insertEventTrack(finalUuid1, "OrganisationUnitPostalAddressAPI",
+
+                            EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(),
+
+                            NotificationStatus.RECEIVED.name());
+
+                } else {
+
+                    log.warn("Postal address response was null for UUID={}", finalUuid1);
+
+                }
+
+            } catch (Exception e) {
+
+                log.error("Postal address create failed for UUID={} : {}", finalUuid1, e.getMessage(), e);
+
+            }
+
+        });
+
+        /*String finalUuid1 = uuid;
+        CompletableFuture<Void> createPostalAddressAsync = CompletableFuture.runAsync(() -> {
+            try {
+                accountingDAO.updatePostalAddress(finalUuid1, postalRequest.getStreetName(),postalRequest.getHouseNumber(),
+                        postalRequest.getHouseNumberAddition(),postalRequest.getPostalCode(),postalRequest.getCityName(),postalRequest.getCountryCode());
+                mappingDAO.insertEventTrack(finalUuid1, "OrganisationUnitPostalAddressAPI",
+                        EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(), NotificationStatus.PENDING.name());
+
+                PostalAddressResponse addr = addressService.createPostalAddress(finalUuid1, postalRequest);
+                if (addr != null) {
+                    accountingDAO.updatePostalAddress(finalUuid1,
+                            addr.getStreetName(),
+                            addr.getHouseNumber(),
+                            addr.getHouseNumberAddition(),
+                            addr.getPostalCode(),
+                            addr.getCityName(),
+                            addr.getCountryCode());
+                    log.info("Postal address created for UUID={}", finalUuid1);
+
+                    mappingDAO.insertEventTrack(finalUuid1, "OrganisationUnitPostalAddressAPI",
+                            EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(), NotificationStatus.RECEIVED.name());
+                } else {
+                    log.warn("Postal address response was null for UUID={}", finalUuid1);
+                }
+            } catch (Exception e) {
+                log.error("Postal address create failed for UUID={} : {}", finalUuid1, e.getMessage(), e);
+            }
+        });
+*/
+
+        /*String finalUuid2 = uuid;
+        CompletableFuture<Void> createDigitalAddressAsync = CompletableFuture.runAsync(() -> {
+            try {
+                accountingDAO.updateDigitalAddress(finalUuid2, digitalRequest.getFullDigitalAddress());
+                mappingDAO.insertEventTrack(finalUuid2, "OrganisationUnitDigitalAddressAPI",
+                        EventTransactionType.CREATE_ORG_UNIT_DIGITAL_ADDRESS.getLabel(), NotificationStatus.PENDING.name());
+
+                DigitalAddressResponse dar = digitalAddrService.createDigitalAddress(finalUuid2, digitalRequest);
+                if (dar != null && dar.getFullDigitalAddress() != null && !dar.getFullDigitalAddress().isBlank()) {
+                    log.info("Digital address created for UUID={}", finalUuid2);
+                    mappingDAO.insertEventTrack(finalUuid2, "OrganisationUnitDigitalAddressAPI",
+                            EventTransactionType.CREATE_ORG_UNIT_DIGITAL_ADDRESS.getLabel(), NotificationStatus.RECEIVED.name());
+                } else {
+                    log.warn("Digital address response was null or empty for UUID={}", finalUuid2);
+                }
+            } catch (Exception e) {
+                log.error("Digital address create failed for UUID={} : {}", finalUuid2, e.getMessage(), e);
+            }
+        });
+
+        String finalUuid3 = uuid;
+        CompletableFuture<Void> createOrganisationUnitHierarchyAsync = CompletableFuture.runAsync(() -> {
+            final String parentId = "PARENT-ID"; // replace with real parent UUID after LE created
+            if (parentId != null && !parentId.isEmpty()) {
+                try {
+                    accountingDAO.updateHierarchy(finalUuid3, parentId);
+                    mappingDAO.insertEventTrack(finalUuid3, "OrganisationUnitHierarchyAPI",
+                            EventTransactionType.CREATE_ORG_HIERARCHY.getLabel(), NotificationStatus.PENDING.name());
+
+                    Response response1 = createOrganisationUnitHierarchy(finalUuid3, parentId);
+
+                    if(response1.statusCode() >= 200 && response1.statusCode() < 300) {
+                        mappingDAO.insertEventTrack(finalUuid3, "OrganisationUnitHierarchyAPI",
+                                EventTransactionType.CREATE_ORG_HIERARCHY.getLabel(), NotificationStatus.RECEIVED.name());
+                    }
+                } catch (Exception e) {
+                    log.error("Hierarchy creation failed for UUID={} : {}", finalUuid3, e.getMessage(), e);
+                }
+            } else {
+                log.info("No parent UUID present for {}", finalUuid3);
+            }
+        });
+
+        CompletableFuture.allOf(updateExternalIdentifierAsync, createPostalAddressAsync,
+                createDigitalAddressAsync, createOrganisationUnitHierarchyAsync).join();
+
+        log.info("All parallel operations completed for organisation unit uuid={}", uuid);
+
+         */
+    }
+
+    private CreateInvolvedPartyResponseV5 createOrganisationUnit(String uuid) {
+
+        String organisationUnitName = configReader.fetchOrganisationUnitName(uuid);
+
+        Map<String, String> config = getConfig(uuid);
+        CreateInvolvedPartyRequestV5 request = CreateInvolvedPartyRequestV5.builder()
+                .organisationUnit(
+                        CreateOrganisationUnitRequest.builder()
+                        .dataSource(DATA_SOURCE)
+                        .logicalDataDomain(LOGICAL_DATA_DOMAIN)
+                        .countryOfResidence(config.get("countryOfResidence"))
+                        .preferredLanguage(LANGUAGE)
+                        .channelOfEntry(CHANNEL_OF_ENTRY)
+                        .organisationUnitStructureType(STRUCTURE_TYPE)
+                        .effectiveDate(config.get("dateOfIssue"))
+                        .organisationUnitNames(Collections.singletonList(
+                                CreateOrganisationUnitNameRequest.builder()
+                                        .organisationUnitNameType(ORGANISATION_UNIT_NAME_TYPE)
+                                        .organisationUnitName(organisationUnitName)
+                                        .build()))
+                        .build())
+                .build();
+        try {
+            accountingDAO.createOuAccountingTableEntry(uuid,organisationUnitName);
+            mappingDAO.insertEventTrack(uuid, "CreateOrganisationUnitApi",
+                    EventTransactionType.CREATE_ORG_UNIT.getLabel(), NotificationStatus.PENDING.name());
+
+            CreateInvolvedPartyResponseV5 responseV5 = onePamRepository.createInvolvedParty(request).get();
+
+            mappingDAO.insertEventTrack(uuid, "CreateOrganisationUnitApi",
+                    EventTransactionType.CREATE_ORG_UNIT.getLabel(), NotificationStatus.RECEIVED.name());
+
+            return responseV5;
+        } catch (Exception e) {
+            log.error("Failed to create organisation unit for uuid={}: {}", uuid, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private UpdateExternalIdentifierOrganisationUnitRequest buildUpdateRequest(String uuid) {
+        Map<String, String> config = getConfig(uuid);
+        return UpdateExternalIdentifierOrganisationUnitRequest.builder()
+                .involvedPartyExternalIdentifierType(EXTERNAL_ID_TYPE)
+               // .involvedPartyExternalIdentifierValue(getConfig(uuid).toString())
+                .involvedPartyExternalIdentifierValue(config.getOrDefault("ORG_NUMBER", uuid))
+              //  .involvedPartyExternalIdentifierStatusType(EXTERNAL_ID_STATUS)
+                .countryOfIssue(config.get("countryOfResidence"))
+                .placeOfIssue(PLACE_OF_ISSUE)
+                .dateOfIssue(config.get("dateOfIssue"))
+                .expiryDate(config.get("expiryDate"))
+                .dataSource(DATA_SOURCE)
+               // .effectiveDate(ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .effectiveDate(effectiveDateSet.toString())
+                //.build(); // e.g., 2025-11-30T06:32:42Z
+                .endDate(endDateSet.toString())
+
+        //   .endDate(ZonedDateTime.now().plusYears(10).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .build();
+    }
+
+    private Response createOrganisationUnitHierarchy(String childId, String parentId) {
+        OrganisationUnitOrganisationRelationshipRequest request = OrganisationUnitOrganisationRelationshipRequest.builder()
+                .childOrganisationUnitIdentifier(childId)
+                .parentOrganisationIdentifier(parentId)
+                .parentRoleReasonType(ROLE_REASON_TYPE)
+                .dataSource(DATA_SOURCE)
+                .build();
+        try {
+            Response response = onePamRepository.createOrganisationUnitHierarchy(request).get();
+            log.info("Successfully created hierarchy between child: {} and parent: {}", childId, parentId);
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to create organisation unit hierarchy", e);
+            throw new RuntimeException("Hierarchy creation failed", e);
+        }
+    }
+
+    private Map<String, String> getConfig(String uuid) {
+        try{
+            List<Map<String, String>> list = configReader.fetchByOrgNumber(uuid);
+            return list.isEmpty() ? Collections.emptyMap() : list.get(0);
+        } catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }
+
+    }
+}
+    public CompletableFuture<CreatePostalAddressResponse> createPostalAddress(String uuid, CreatePostalAddressRequest payload) {
+
+        try {
+
+            log.info("createPostalAddress request payload: {}", payload);
+
+            String url = RegkeyEnum.CREATE_POSTAL_ADDRESS.resolveEndpoint(uuid);
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+
+            Request request = new RichHttpRequestBuilder()
+
+                    .withUrl(url)
+
+                    .withMethod(Method.Post())
+
+                    .withJsonContent(jsonPayload)
+
+                    .withHeader("X-ING-LastUpdateUser", "X-ING-LastUpdateUser")
+
+                    .build();
+
+            printRequest(request);
+
+            return apiClient.apply(request)
+
+                    .thenApply(response -> {
+
+                        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+
+                            try {
+
+                                // Deserialize JSON into wrapper object
+
+                                return objectMapper.readValue(response.contentString() , CreatePostalAddressResponse.class);
+
+                            } catch (Exception e) {
+
+                                log.error("Error parsing response: {}", e);
+
+                                throw new DataDistributionApiException(
+
+                                        RegkeyEnum.CREATE_POSTAL_ADDRESS,
+
+                                        "Failed to parse postal address response" , e.getMessage()
+                                );
+
+                            }
+
+                        } else {
+
+                            log.error("Failed to create postal address. Status: {}", response.statusCode());
+
+                            throw new DataDistributionApiException(
+
+                                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+
+                                    "Failed to create postal address",
+
+                                    "Status: " + response.statusCode()
+
+                            );
+
+                        }
+
+                    });
+
+        } catch (Exception e) {
+
+            log.error("createPostalAddress API error: {}", e.getMessage());
+
+            throw new DataDistributionApiException(
+
+                    RegkeyEnum.CREATE_POSTAL_ADDRESS,
+
+                    "Failed to build request for postal address creation",
+
+                    e.getMessage()
+
+            );
+
+        }
+
+    }

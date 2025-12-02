@@ -1,0 +1,246 @@
+package com.ing.datadist.batch.tasklet;
+
+import com.ing.datadist.api.model.SearchInvolvedPartiesResponseV1;
+import com.ing.datadist.api.service.InvolvedPartySearchService;
+import com.ing.datadist.api.service.OrganisationUnitService;
+import com.ing.datadist.api.service.UpdateOrganisationUnitService;
+import com.ing.datadist.domain.OrganisationUnitDomainWrapper;
+import com.ing.datadist.domain.TaskletCofaceOpsDomainWrapper;
+import com.ing.datadist.oil.service.OilCreateFileLogicService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.StepContribution;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Component
+@StepScope
+@Slf4j
+public class OnePamSearchApiTasklet implements Tasklet {
+
+    @Value("${app.apiFlow}")
+    private boolean apiFlow;
+
+    @Autowired
+    OilCreateFileLogicService oilCreateFileLogicService;
+
+    private final InvolvedPartySearchService searchService;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final UpdateOrganisationUnitService updateOrganisationUnitService;
+
+    private final TaskletCofaceOpsDomainWrapper taskletCofaceOpsDomainWrapper;
+
+    public OnePamSearchApiTasklet(InvolvedPartySearchService searchService, OrganisationUnitService organisationUnitService, UpdateOrganisationUnitService updateOrganisationUnitService, TaskletCofaceOpsDomainWrapper taskletCofaceOpsDomainWrapper) {
+        this.searchService = searchService;
+        this.organisationUnitService = organisationUnitService;
+        this.updateOrganisationUnitService = updateOrganisationUnitService;
+        this.taskletCofaceOpsDomainWrapper = taskletCofaceOpsDomainWrapper;
+    }
+
+    @Override
+    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        try {
+            List<OrganisationUnitDomainWrapper> wrappers = taskletCofaceOpsDomainWrapper.getCofaceOpsDomainWrapper();
+            List<OrganisationUnitDomainWrapper> oilCreateWrapperList = new ArrayList<>();
+            List<OrganisationUnitDomainWrapper> oilUpdateWrapperList = new ArrayList<>();
+            log.info("Demo_28_Nov_API OnePamSearchApiTasklet wrappers size:{}", wrappers.size());
+            log.info("Demo_28_Nov_API apiFlow:{}", apiFlow);
+
+            for (OrganisationUnitDomainWrapper domainWrapper : wrappers) {
+                try {
+
+                    String organisationDdUuid = domainWrapper.getOrgUUID();
+                    String organisationUnitDdUuid = domainWrapper.getOpsUUID();
+
+                    if (organisationDdUuid == null || organisationDdUuid.isEmpty()) {
+                        log.info("Skipping wrapper: OrgUUID is null or empty");
+                        continue;
+                    }
+
+//                    SearchInvolvedPartiesResponseV1 organisationResult = searchService.searchInvolvedPartyByInternalIdentifier("organisation", "UUID", organisationDdUuid);
+//                    if (organisationResult != null && organisationResult.getOrganisations() != null && organisationUnitDdUuid != null) {
+//                        log.info("Organisation found for UUID: {}", organisationDdUuid);
+                        SearchInvolvedPartiesResponseV1 organisationUnitResult = searchService.searchInvolvedPartyByInternalIdentifier("organisationUnit", "UUID", organisationUnitDdUuid);
+                        if (organisationUnitResult == null || organisationUnitResult.getOrganisationUnits() == null || organisationUnitResult.getOrganisationUnits().isEmpty()) {
+                            if (apiFlow) {
+                                organisationUnitService.processOrganisationUnit(organisationUnitDdUuid);
+                            } else {
+                                oilCreateWrapperList.add(domainWrapper);
+                            }
+                        }
+                else {
+                            updateOrganisationUnitService.updateOrganisationUnit(domainWrapper, organisationUnitResult, apiFlow, oilUpdateWrapperList);
+                        }
+//                    }
+                } catch (Exception e) {
+                    log.error("Exception occurred while executing API call for UUID :{} error :{}", domainWrapper.getOpsUUID(), e);
+                }
+            }
+            if(!apiFlow) {
+                oilCreateFileLogicService.createOilFile(null, oilCreateWrapperList, oilUpdateWrapperList, "D");
+            }
+        } catch (Exception ex) {
+            log.error("Exception occurred while executing OnePamSearchApiTasklet : {}", ex.getMessage());
+        }
+        return RepeatStatus.FINISHED;
+    }
+}
+
+
+dont go for batch n all just make suredata goes into response n table properly
+package com.ing.datadist.batch.repository;
+
+import com.ing.datadist.domain.OrganisationDomainWrapper;
+import com.ing.datadist.domain.OrganisationUnitDomainWrapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+@Slf4j
+public class MappingDAO {
+
+    private final static String MAPPING_TABLE_OPS_INSERT_SQL = "INSERT INTO DD_MAP_TBL (DD_UUID, OPS_NUMBER) VALUES (?, ?)";
+    private final static String MAPPING_TABLE_LE_INSERT_SQL = "INSERT INTO DD_MAP_TBL (DD_UUID, ORG_NUMBER) VALUES (?, ?)";
+    private final static int RS_MAPPING_TABLE_UUID_NO = 1;
+    private final static int RS_MAPPING_TABLE_OPS_NUMBER_NO = 2;
+    private final static int RS_MAPPING_TABLE_LE_NUMBER_NO = 2;
+    private final static String MAPPING_TABLE_OPS_QUERYING_SQL_WITHOUT_PARAMETERS = "select DD_UUID, OPS_NUMBER FROM DD_MAP_TBL";
+    private final static String MAPPING_TABLE_LE_QUERYING_SQL_WITHOUT_PARAMETERS = "select DD_UUID, ORG_NUMBER FROM DD_MAP_TBL ";
+    private final static String MAPPING_TABLE_FIELD_OPS_NUMBER = "OPS_NUMBER";
+    private final static String MAPPING_TABLE_FIELD_DD_UUID = "DD_UUID";
+    private final static String MAPPING_TABLE_FIELD_ORG_NUMBER = "ORG_NUMBER";
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    public Map<String, String> fetchAllOPsUuidMappings() {
+
+        return jdbcTemplate.query(MAPPING_TABLE_OPS_QUERYING_SQL_WITHOUT_PARAMETERS, rs -> {
+            Map<String, String> result = new HashMap<>();
+            while (rs.next()) {
+                result.put(rs.getString(MAPPING_TABLE_FIELD_OPS_NUMBER), rs.getString(MAPPING_TABLE_FIELD_DD_UUID));
+            }
+            return result;
+        });
+    }
+
+    public Map<String, String> fetchAllLEUuidMappings() {
+
+        return jdbcTemplate.query(MAPPING_TABLE_LE_QUERYING_SQL_WITHOUT_PARAMETERS, rs -> {
+            Map<String, String> result = new HashMap<>();
+            while (rs.next()) {
+                result.put(rs.getString(MAPPING_TABLE_FIELD_ORG_NUMBER), rs.getString(MAPPING_TABLE_FIELD_DD_UUID));
+            }
+            return result;
+        });
+    }
+
+    public void batchInsertOPsMappingRecords(List<OrganisationUnitDomainWrapper> records) {
+        log.info("batchInsertOPsMappingRecords: {}", records);
+        try {
+            jdbcTemplate.batchUpdate(MAPPING_TABLE_OPS_INSERT_SQL, new BatchPreparedStatementSetter() {
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    OrganisationUnitDomainWrapper record = records.get(i);
+                    ps.setString(RS_MAPPING_TABLE_UUID_NO, record.getOpsUUID());
+                    ps.setString(RS_MAPPING_TABLE_OPS_NUMBER_NO, record.getOpsExternalIdentifierVal());
+
+                }
+
+                public int getBatchSize() {
+                    return records.size();
+                }
+            });
+        } catch (Exception invocationException) {
+            log.error("batchInsertLEMappingRecords: {}", invocationException);
+        }
+    }
+
+    public void batchInsertLEMappingRecords(List<OrganisationDomainWrapper> records) {
+        log.info("batchInsertLEMappingRecords: {}", records);
+        try {
+            jdbcTemplate.batchUpdate(MAPPING_TABLE_LE_INSERT_SQL, new BatchPreparedStatementSetter() {
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    OrganisationDomainWrapper record = records.get(i);
+                    ps.setString(RS_MAPPING_TABLE_UUID_NO, record.getOrgUUID());
+                    ps.setString(RS_MAPPING_TABLE_LE_NUMBER_NO, record.getOrgExternalIdentifierVal());
+                }
+
+                public int getBatchSize() {
+                    return records.size();
+                }
+            });
+        } catch (Exception invocationException) {
+            log.error("batchInsertLEMappingRecords: {}", invocationException);
+        }
+    }
+
+    public void insertEventTrack(String involvedPartyIdentifier, String notificationType, String transactionType, String status) {
+        String updateSql = "insert into dd_event_track_tbl(DD_UUID,NOTIFICATION_TYPE,TRANSACTION_TYPE,STATUS) VALUES (?,?,?,?)";
+        jdbcTemplate.update(updateSql, involvedPartyIdentifier, notificationType, transactionType, status);
+    }
+
+    public List<String> findPendingNotifications(String uuid) {
+        String sql = """
+                    SELECT e.notification_type
+                    FROM DD_EVENT_TRACK_TBL e
+                    WHERE e.DD_UUID = ?
+                      AND e.status = 'PENDING'
+                      AND NOT EXISTS (
+                        SELECT 1
+                        FROM DD_EVENT_TRACK_TBL r
+                        WHERE r.DD_UUID    = e.DD_UUID  
+                          AND r.notification_type = e.notification_type
+                          AND r.status            = 'RECEIVED'
+                      )
+                """;
+        return jdbcTemplate.query(sql, (rs, i) -> rs.getString(1), uuid);
+    }
+
+    public List<String> findPendingNotifications() {
+        String sql = """
+                    SELECT   e.notification_type
+                       FROM DD_EVENT_TRACK_TBL e
+                       WHERE e.status = 'PENDING'
+                         AND NOT EXISTS (
+                             SELECT 1
+                             FROM DD_EVENT_TRACK_TBL r
+                             WHERE r.DD_UUID = e.DD_UUID
+                               AND r.notification_type = e.notification_type
+                               AND r.status = 'RECEIVED'
+                         )
+                       ORDER BY e.DD_UUID
+                """;
+        return jdbcTemplate.query(sql, (rs, i) -> rs.getString(1));
+    }
+
+    public void insertFinalStatus(String UUID,
+
+                                  String finalStatus) {
+        String sql = """
+                    INSERT INTO DD_NOTIFICATION_STATUS
+                      (DD_UUID, STATUS )
+                    VALUES (?, ?)
+                """;
+
+        jdbcTemplate.update(sql, UUID, finalStatus);
+    }
+}
+

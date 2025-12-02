@@ -1,246 +1,679 @@
-package com.ing.datadist.batch.tasklet;
+package com.ing.datadist.api.service;
 
-import com.ing.datadist.api.model.SearchInvolvedPartiesResponseV1;
-import com.ing.datadist.api.service.InvolvedPartySearchService;
-import com.ing.datadist.api.service.OrganisationUnitService;
-import com.ing.datadist.api.service.UpdateOrganisationUnitService;
+import com.ing.datadist.api.model.*;
+import com.ing.datadist.api.repository.AccountingDAO;
+import com.ing.datadist.batch.repository.MappingDAO;
+import com.ing.datadist.configreader.CofaceOpsConfigReader;
 import com.ing.datadist.domain.OrganisationUnitDomainWrapper;
-import com.ing.datadist.domain.TaskletCofaceOpsDomainWrapper;
-import com.ing.datadist.oil.service.OilCreateFileLogicService;
+import com.ing.datadist.kafka.util.EventTransactionType;
+import com.ing.datadist.kafka.util.NotificationStatus;
+import com.twitter.finagle.http.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.batch.core.step.tasklet.Tasklet;
-import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
-@Component
-@StepScope
+import static com.ing.datadist.api.utils.DataDistributionConstants.*;
+
+@Service
 @Slf4j
-public class OnePamSearchApiTasklet implements Tasklet {
+public class OrganisationUnitService {
 
-    @Value("${app.apiFlow}")
-    private boolean apiFlow;
+    private final OnePamRepository onePamRepository;
+    private final CofaceOpsConfigReader configReader;
+    private final AddressService addressService;
+    private final DigitalAddrService digitalAddrService;
+    private final AccountingDAO accountingDAO;
+    private final MappingDAO mappingDAO;
+    Instant effectiveDateSet = Instant.now()
+            .minusSeconds(120) // safety margin
+            .truncatedTo(ChronoUnit.SECONDS);
 
-    @Autowired
-    OilCreateFileLogicService oilCreateFileLogicService;
+    Instant endDateSet = effectiveDateSet.plus(3652, ChronoUnit.DAYS);
 
-    private final InvolvedPartySearchService searchService;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-    private final OrganisationUnitService organisationUnitService;
-
-    private final UpdateOrganisationUnitService updateOrganisationUnitService;
-
-    private final TaskletCofaceOpsDomainWrapper taskletCofaceOpsDomainWrapper;
-
-    public OnePamSearchApiTasklet(InvolvedPartySearchService searchService, OrganisationUnitService organisationUnitService, UpdateOrganisationUnitService updateOrganisationUnitService, TaskletCofaceOpsDomainWrapper taskletCofaceOpsDomainWrapper) {
-        this.searchService = searchService;
-        this.organisationUnitService = organisationUnitService;
-        this.updateOrganisationUnitService = updateOrganisationUnitService;
-        this.taskletCofaceOpsDomainWrapper = taskletCofaceOpsDomainWrapper;
+    public OrganisationUnitService(OnePamRepository onePamRepository,
+                                   CofaceOpsConfigReader configReader,
+                                   AddressService addressService,
+                                   DigitalAddrService digitalAddrService,
+                                   AccountingDAO accountingDAO,
+                                   MappingDAO mappingDAO) {
+        this.onePamRepository = onePamRepository;
+        this.configReader = configReader;
+        this.addressService = addressService;
+        this.digitalAddrService = digitalAddrService;
+        this.accountingDAO = accountingDAO;
+        this.mappingDAO = mappingDAO;
     }
 
-    @Override
-    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+    public void processOrganisationUnit(String orgNumber) throws Exception {
+        CreatePostalAddressRequest postalRequest = new CreatePostalAddressRequest();
+        CreateDigitalAddressV5Request digitalRequest = new CreateDigitalAddressV5Request("", "", "", "");
+        UpdateExternalIdentifierOrganisationUnitRequest externalIdRequest = new UpdateExternalIdentifierOrganisationUnitRequest();
+        CreateOrganisationUnitRequest orgUnitRequest = new CreateOrganisationUnitRequest();
+
+        processOrganisationUnit(orgNumber, postalRequest, digitalRequest, externalIdRequest, orgUnitRequest);
+    }
+
+public void processOrganisationUnit(String orgNumber,
+                                    CreatePostalAddressRequest postalRequest,
+                                    CreateDigitalAddressV5Request digitalRequest,
+                                    UpdateExternalIdentifierOrganisationUnitRequest externalIdRequest,
+                                    CreateOrganisationUnitRequest orgUnitRequest) throws ExecutionException, InterruptedException {
+
+    // 1. Fetch config
+    Map<String, String> config = getConfig(orgNumber);
+
+    // 2. Build wrapper for local DB insert
+    OrganisationUnitDomainWrapper wrapper = new OrganisationUnitDomainWrapper();
+    wrapper.setOpsUUID(UUID.randomUUID().toString());
+    wrapper.setOrgExternalIdentifierVal(config.get("ORG_NUMBER"));
+    wrapper.setOrganisationUnitName(decodeHtml(config.get("OPS_ORGANISATIONUNITNAME")));
+    wrapper.setPostalAddressStreetNm(config.get("ADR_POSTALADDRESS_STREETNM"));
+    wrapper.setPostalAddressHouseNum(config.get("ADR_POSTALADDRESS_HOUSENUM"));
+    wrapper.setPostalAddressHouseAdd(config.get("ADR_POSTALADDRESS_HOUSEADD"));
+    wrapper.setPostalAddressPostalCd(config.get("ADR_POSTALADDRESS_POSTALCD"));
+    wrapper.setPostalAddressCityName(config.get("ADR_POSTALADDRESS_CITYNAME"));
+    wrapper.setPostalAddressCntryCd(normalizeCountryCode(config.get("ADR_POSTALADDRESS_CNTRYCD")));
+    wrapper.setOpsExtIdDateOfIssue(config.get("OPS_EXTID_DATEOFISSUE"));
+    wrapper.setOpsExtIdExpiryDate(config.get("OPS_EXTID_EXPIRYDATE"));
+    wrapper.setDigitalAddrEmail(config.get("ADR_DIGITALADDR_EMAIL"));
+
+    // 3. Insert into SQL (MERGE)
+    accountingDAO.insertFullOrganisationUnitWithWrapperMergeSqlServer(wrapper);
+
+    // 4. Create OU using OnePam
+    CreateInvolvedPartyResponseV5 response = createOrganisationUnit(orgNumber);
+
+    // Extract UUID
+    String uuid = response.getOrganisationUnit()
+            .getInvolvedPartyInternalIdentifiers()
+            .stream()
+            .findFirst()
+            .map(InternalIdentifierResponse::getInvolvedPartyInternalIdentifierValue)
+            .orElse(null);
+
+    if (uuid == null || uuid.isBlank()) {
+        return; // Stop if UUID not returned
+    }
+
+    // 5. Update External Identifier (Sequential)
+    UpdateExternalIdentifierOrganisationUnitRequest updateRequest = buildUpdateRequest(uuid);
+    onePamRepository.updateExternalIdentifier(uuid, updateRequest).get();
+    accountingDAO.updateExternalIdentifier(uuid, updateRequest.getInvolvedPartyExternalIdentifierValue());
+
+    // 6. Create Postal Address (Sequential)
+    PostalAddressResponse addr = addressService.createPostalAddress(uuid);
+    if (addr != null) {
+        accountingDAO.updatePostalAddress(uuid, addr.getStreetName(), addr.getHouseNumber(),
+                addr.getHouseNumberAddition(), addr.getPostalCode(), addr.getCityName(), addr.getCountryCode());
+    }
+
+    // 7. Digital Address (Optional)
+    // digitalAddrService.createDigitalAddress(uuid, digitalRequest);
+
+
+     }
+
+    private CreateInvolvedPartyResponseV5 createOrganisationUnit(String uuid) {
+
+        String organisationUnitName = String.valueOf(configReader.fetchOrganisationUnitName(uuid));
+
+        Map<String, String> config = getConfig(uuid);
+        CreateInvolvedPartyRequestV5 request = CreateInvolvedPartyRequestV5.builder()
+                .organisationUnit(
+                        CreateOrganisationUnitRequest.builder()
+                        .dataSource(DATA_SOURCE)
+                        .logicalDataDomain(LOGICAL_DATA_DOMAIN)
+                        .countryOfResidence(config.get("countryOfResidence"))
+                        .preferredLanguage(LANGUAGE)
+                        .channelOfEntry(CHANNEL_OF_ENTRY)
+                        .organisationUnitStructureType(STRUCTURE_TYPE)
+                        .effectiveDate(config.get("dateOfIssue"))
+                        .organisationUnitNames(Collections.singletonList(
+                                CreateOrganisationUnitNameRequest.builder()
+                                        .organisationUnitNameType(ORGANISATION_UNIT_NAME_TYPE)
+                                        .organisationUnitName(organisationUnitName)
+                                        .build()))
+                        .build())
+                .build();
         try {
-            List<OrganisationUnitDomainWrapper> wrappers = taskletCofaceOpsDomainWrapper.getCofaceOpsDomainWrapper();
-            List<OrganisationUnitDomainWrapper> oilCreateWrapperList = new ArrayList<>();
-            List<OrganisationUnitDomainWrapper> oilUpdateWrapperList = new ArrayList<>();
-            log.info("Demo_28_Nov_API OnePamSearchApiTasklet wrappers size:{}", wrappers.size());
-            log.info("Demo_28_Nov_API apiFlow:{}", apiFlow);
+  //          accountingDAO.createOuAccountingTableEntry(uuid,organisationUnitName);
+            mappingDAO.insertEventTrack(uuid, "CreateOrganisationUnitApi",
+                    EventTransactionType.CREATE_ORG_UNIT.getLabel(), NotificationStatus.PENDING.name());
 
-            for (OrganisationUnitDomainWrapper domainWrapper : wrappers) {
-                try {
+            CreateInvolvedPartyResponseV5 responseV5 = onePamRepository.createInvolvedParty(request).get();
 
-                    String organisationDdUuid = domainWrapper.getOrgUUID();
-                    String organisationUnitDdUuid = domainWrapper.getOpsUUID();
-
-                    if (organisationDdUuid == null || organisationDdUuid.isEmpty()) {
-                        log.info("Skipping wrapper: OrgUUID is null or empty");
-                        continue;
-                    }
-
-//                    SearchInvolvedPartiesResponseV1 organisationResult = searchService.searchInvolvedPartyByInternalIdentifier("organisation", "UUID", organisationDdUuid);
-//                    if (organisationResult != null && organisationResult.getOrganisations() != null && organisationUnitDdUuid != null) {
-//                        log.info("Organisation found for UUID: {}", organisationDdUuid);
-                        SearchInvolvedPartiesResponseV1 organisationUnitResult = searchService.searchInvolvedPartyByInternalIdentifier("organisationUnit", "UUID", organisationUnitDdUuid);
-                        if (organisationUnitResult == null || organisationUnitResult.getOrganisationUnits() == null || organisationUnitResult.getOrganisationUnits().isEmpty()) {
-                            if (apiFlow) {
-                                organisationUnitService.processOrganisationUnit(organisationUnitDdUuid);
-                            } else {
-                                oilCreateWrapperList.add(domainWrapper);
-                            }
-                        }
-                else {
-                            updateOrganisationUnitService.updateOrganisationUnit(domainWrapper, organisationUnitResult, apiFlow, oilUpdateWrapperList);
-                        }
-//                    }
-                } catch (Exception e) {
-                    log.error("Exception occurred while executing API call for UUID :{} error :{}", domainWrapper.getOpsUUID(), e);
-                }
+            mappingDAO.insertEventTrack(uuid, "CreateOrganisationUnitApi",
+                    EventTransactionType.CREATE_ORG_UNIT.getLabel(), NotificationStatus.RECEIVED.name());
+            if( mappingDAO.findPendingNotifications(uuid).isEmpty())
+            {
+                mappingDAO.insertFinalStatus(uuid, "SUCCESS");
+                log.info(" FINAL STATUS INSERTED for {}", uuid);
             }
-            if(!apiFlow) {
-                oilCreateFileLogicService.createOilFile(null, oilCreateWrapperList, oilUpdateWrapperList, "D");
-            }
-        } catch (Exception ex) {
-            log.error("Exception occurred while executing OnePamSearchApiTasklet : {}", ex.getMessage());
+            return responseV5;
+        } catch (Exception e) {
+            log.error("Failed to create organisation unit for uuid={}: {}", uuid, e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return RepeatStatus.FINISHED;
     }
+
+    private UpdateExternalIdentifierOrganisationUnitRequest buildUpdateRequest(String uuid) {
+        Map<String, String> config = getConfig(uuid);
+        return UpdateExternalIdentifierOrganisationUnitRequest.builder()
+                .involvedPartyExternalIdentifierType(EXTERNAL_ID_TYPE)
+                .involvedPartyExternalIdentifierValue(config.getOrDefault("ORG_NUMBER", uuid))
+                .countryOfIssue(config.get("countryOfResidence"))
+                .placeOfIssue(PLACE_OF_ISSUE)
+                .dateOfIssue(config.get("dateOfIssue"))
+                .expiryDate(config.get("expiryDate"))
+                .dataSource(DATA_SOURCE)
+                .effectiveDate(effectiveDateSet.toString())
+                .endDate(endDateSet.toString())
+                .build();
+    }
+
+    private Response createOrganisationUnitHierarchy(String childId, String parentId) {
+        OrganisationUnitOrganisationRelationshipRequest request = OrganisationUnitOrganisationRelationshipRequest.builder()
+                .childOrganisationUnitIdentifier(childId)
+                .parentOrganisationIdentifier(parentId)
+                .parentRoleReasonType(ROLE_REASON_TYPE)
+                .dataSource(DATA_SOURCE)
+                .build();
+        try {
+            Response response = onePamRepository.createOrganisationUnitHierarchy(request).get();
+            log.info("Successfully created hierarchy between child: {} and parent: {}", childId, parentId);
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to create organisation unit hierarchy", e);
+            throw new RuntimeException("Hierarchy creation failed", e);
+        }
+    }
+
+    private Map<String, String> getConfig(String uuid) {
+        try{
+            List<Map<String, String>> list = configReader.fetchByOrgNumber(uuid);
+            return list.isEmpty() ? Collections.emptyMap() : list.get(0);
+        } catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }
+
+    }
+
+    private String decodeHtml(String s) {
+        return (s == null) ? null : s.replace("&amp;", "&").trim();
+    }
+
+    private String normalizeCountryCode(String s) {
+        if (s == null || s.isBlank()) return null;
+        return "000".equals(s.trim()) ? "BE" : s.trim().toUpperCase();
+    }
+
+}
+package com.ing.datadist.domain;
+
+import lombok.Data;
+
+@Data
+public class OrganisationUnitDomainWrapper {
+    private String opsUUID;
+    private String orgUUID;
+    private String orgExternalIdentifierVal;
+    private String opsExternalIdentifierVal;
+    private String organisationUnitName;
+    private String postalAddressStreetNm;
+    private String postalAddressHouseNum;
+    private String postalAddressHouseAdd;
+    private String postalAddressPostalCd;
+    private String postalAddressCityName;
+    private String postalAddressCntryCd;
+    private String opsExtIdDateOfIssue;
+    private String opsExtIdExpiryDate;
+    private String digitalAddrFullTel;
+    private String digitalAddrFullTefgn;
+    private String digitalAddrEmail;
 }
 
+package com.ing.datadist.api.service;
+import com.ing.datadist.api.model.CreatePostalAddressRequest;
+import com.ing.datadist.api.model.PostalAddressResponse;
+import com.ing.datadist.api.model.UpdatePostalAddressV5Request;
+import com.ing.datadist.api.service.OnePamRepository;
+import com.ing.datadist.api.utils.DataDistributionConstants;
+import com.ing.datadist.batch.repository.MappingDAO;
+import com.ing.datadist.configreader.CofaceOpsConfigReader;
+import com.ing.datadist.kafka.util.EventTransactionType;
+import com.ing.datadist.kafka.util.NotificationStatus;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import com.ing.datadist.api.utils.DataDistributionConstants.*;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
-dont go for batch n all just make suredata goes into response n table properly
-package com.ing.datadist.batch.repository;
+@Service
+@Slf4j
+public class AddressService {
 
-import com.ing.datadist.domain.OrganisationDomainWrapper;
+    private final OnePamRepository onePamRepository;
+    private final MappingDAO mappingDAO;
+    private final CofaceOpsConfigReader configReader;
+
+    public AddressService(OnePamRepository onePamRepository,
+                          MappingDAO mappingDAO,
+                          CofaceOpsConfigReader configReader) {
+        this.onePamRepository = onePamRepository;
+        this.mappingDAO = mappingDAO;
+        this.configReader = configReader;
+    }
+
+    public PostalAddressResponse createPostalAddress(String uuid) {
+        log.info("Starting postal address creation for uuid={}", uuid);
+
+        CreatePostalAddressRequest request = buildCreateRequest(uuid);
+
+        try {
+            mappingDAO.insertEventTrack(
+                    uuid,
+                    "CreatePostalAddressApi",
+                    EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(),
+                    NotificationStatus.PENDING.name()
+            );
+
+            onePamRepository.createPostalAddress(uuid, request).get();
+            mappingDAO.insertEventTrack(
+                    uuid,
+                    "CreatePostalAddressApi",
+                    EventTransactionType.CREATE_ORG_UNIT_POSTAL_ADDRESS.getLabel(),
+                    NotificationStatus.RECEIVED.name()
+            );
+
+            if (mappingDAO.findPendingNotifications(uuid).isEmpty()) {
+                mappingDAO.insertFinalStatus(uuid, "SUCCESS");
+                log.info("FINAL STATUS INSERTED for {}", uuid);
+            }
+
+            log.info("Successfully created postal address for uuid={}", uuid);
+
+            return PostalAddressResponse.builder()
+                    .streetName(request.getStreetName())
+                    .postalAddressUsageType(defaultIfBlank(request.getPostalAddressUsageType(), "BSN_ADR"))
+                    .houseNumber(request.getHouseNumber())
+                    .houseNumberAddition(request.getHouseNumberAddition())
+                    .postalCode(request.getPostalCode())
+                    .cityName(request.getCityName())
+                    .countryCode(defaultIfBlank(request.getCountryCode(), "BE"))
+                    .build();
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // restore interrupt flag
+            log.error("Thread interrupted while creating postal address for uuid={}", uuid, e);
+            throw new RuntimeException("Postal address creation interrupted", e);
+        } catch (ExecutionException e) {
+            log.error("Execution failed while creating postal address for uuid={}", uuid, e);
+            throw new RuntimeException("Postal address creation failed", e);
+        } catch (Exception e) {
+            log.error("Unexpected error creating postal address for uuid={}: {}", uuid, e.getMessage(), e);
+            throw new RuntimeException("Postal address creation failed", e);
+        }
+    }
+
+    private CreatePostalAddressRequest buildCreateRequest(String uuid) {
+        Map<String, String> cfg = getConfig(uuid);
+
+        return CreatePostalAddressRequest.builder()
+                .dataSource(DataDistributionConstants.DATA_SOURCE)
+                .countryCode(defaultIfBlank(cfg.get("countryCode"), "BE"))
+                .postalAddressUsageType(defaultIfBlank(cfg.get("postalAddressUsageType"), "BSN_ADR"))
+                .streetName(cfg.get("streetName"))
+                .houseNumber(cfg.get("houseNumber"))
+                .houseNumberAddition(cfg.get("houseNumberAddition"))
+                .postalCode(cfg.get("postalCode"))
+                .cityName(cfg.get("cityName"))
+                .effectiveDate(cfg.get("effectiveDate"))
+                .endDate(cfg.get("endDate"))
+                .build();
+    }
+
+    private Map<String, String> getConfig(String uuid) {
+        try {
+            Map<String, String> configRead = configReader.fetchAddressDetails(uuid);
+            return (configRead == null) ? Collections.emptyMap() : configRead;
+        } catch (Exception e) {
+            log.warn("Failed to load postal address config for uuid={}. Falling back to defaults. Cause: {}", uuid, e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    private String defaultIfBlank(String value, String fallback) {
+        return (value == null || value.isBlank()) ? fallback : value;
+    }
+
+    public void updateLastVerificationDate(String uuid, String usageType) {
+
+        String nowIso = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
+                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+        UpdatePostalAddressV5Request request = new UpdatePostalAddressV5Request();
+        request.setLastVerificationDate(nowIso);
+        String endpoint = String.format("/v5/involved-parties/%s/postal-addresses/%s", uuid, usageType);
+
+        try {
+            onePamRepository.updatePostalAddress(request, uuid, "BSN_ADR");
+            log.info("PATCH successful for uuid={} usageType={} verificationDate={}", uuid, usageType);
+        } catch (Exception e) {
+            log.error("PATCH failed for uuid={} usageType={} error={}", uuid, usageType, e.getMessage(), e);
+            throw new RuntimeException("Failed to update verification date", e);
+        }
+    }
+}
+package com.ing.datadist.api.repository;
+
+import com.ing.datadist.api.model.CreateInvolvedPartyResponseV5;
+import com.ing.datadist.api.model.InvolvedPartiesOrganisationUnitResponse;
 import com.ing.datadist.domain.OrganisationUnitDomainWrapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 
 @Repository
 @Slf4j
-public class MappingDAO {
+public class AccountingDAO {
 
-    private final static String MAPPING_TABLE_OPS_INSERT_SQL = "INSERT INTO DD_MAP_TBL (DD_UUID, OPS_NUMBER) VALUES (?, ?)";
-    private final static String MAPPING_TABLE_LE_INSERT_SQL = "INSERT INTO DD_MAP_TBL (DD_UUID, ORG_NUMBER) VALUES (?, ?)";
-    private final static int RS_MAPPING_TABLE_UUID_NO = 1;
-    private final static int RS_MAPPING_TABLE_OPS_NUMBER_NO = 2;
-    private final static int RS_MAPPING_TABLE_LE_NUMBER_NO = 2;
-    private final static String MAPPING_TABLE_OPS_QUERYING_SQL_WITHOUT_PARAMETERS = "select DD_UUID, OPS_NUMBER FROM DD_MAP_TBL";
-    private final static String MAPPING_TABLE_LE_QUERYING_SQL_WITHOUT_PARAMETERS = "select DD_UUID, ORG_NUMBER FROM DD_MAP_TBL ";
-    private final static String MAPPING_TABLE_FIELD_OPS_NUMBER = "OPS_NUMBER";
-    private final static String MAPPING_TABLE_FIELD_DD_UUID = "DD_UUID";
-    private final static String MAPPING_TABLE_FIELD_ORG_NUMBER = "ORG_NUMBER";
+    private final JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    public Map<String, String> fetchAllOPsUuidMappings() {
-
-        return jdbcTemplate.query(MAPPING_TABLE_OPS_QUERYING_SQL_WITHOUT_PARAMETERS, rs -> {
-            Map<String, String> result = new HashMap<>();
-            while (rs.next()) {
-                result.put(rs.getString(MAPPING_TABLE_FIELD_OPS_NUMBER), rs.getString(MAPPING_TABLE_FIELD_DD_UUID));
-            }
-            return result;
-        });
+    public AccountingDAO(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Map<String, String> fetchAllLEUuidMappings() {
+ /*   public void updateExternalIdentifier(String uuid, String externalId) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET ORG_NUMBER = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, externalId, Timestamp.from(Instant.now()), uuid);
+        log.info("Updated external ID for UUID={}", uuid);
+    }*/
 
-        return jdbcTemplate.query(MAPPING_TABLE_LE_QUERYING_SQL_WITHOUT_PARAMETERS, rs -> {
-            Map<String, String> result = new HashMap<>();
-            while (rs.next()) {
-                result.put(rs.getString(MAPPING_TABLE_FIELD_ORG_NUMBER), rs.getString(MAPPING_TABLE_FIELD_DD_UUID));
-            }
-            return result;
-        });
-    }
 
-    public void batchInsertOPsMappingRecords(List<OrganisationUnitDomainWrapper> records) {
-        log.info("batchInsertOPsMappingRecords: {}", records);
-        try {
-            jdbcTemplate.batchUpdate(MAPPING_TABLE_OPS_INSERT_SQL, new BatchPreparedStatementSetter() {
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    OrganisationUnitDomainWrapper record = records.get(i);
-                    ps.setString(RS_MAPPING_TABLE_UUID_NO, record.getOpsUUID());
-                    ps.setString(RS_MAPPING_TABLE_OPS_NUMBER_NO, record.getOpsExternalIdentifierVal());
-
-                }
-
-                public int getBatchSize() {
-                    return records.size();
-                }
-            });
-        } catch (Exception invocationException) {
-            log.error("batchInsertLEMappingRecords: {}", invocationException);
-        }
-    }
-
-    public void batchInsertLEMappingRecords(List<OrganisationDomainWrapper> records) {
-        log.info("batchInsertLEMappingRecords: {}", records);
-        try {
-            jdbcTemplate.batchUpdate(MAPPING_TABLE_LE_INSERT_SQL, new BatchPreparedStatementSetter() {
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    OrganisationDomainWrapper record = records.get(i);
-                    ps.setString(RS_MAPPING_TABLE_UUID_NO, record.getOrgUUID());
-                    ps.setString(RS_MAPPING_TABLE_LE_NUMBER_NO, record.getOrgExternalIdentifierVal());
-                }
-
-                public int getBatchSize() {
-                    return records.size();
-                }
-            });
-        } catch (Exception invocationException) {
-            log.error("batchInsertLEMappingRecords: {}", invocationException);
-        }
-    }
-
-    public void insertEventTrack(String involvedPartyIdentifier, String notificationType, String transactionType, String status) {
-        String updateSql = "insert into dd_event_track_tbl(DD_UUID,NOTIFICATION_TYPE,TRANSACTION_TYPE,STATUS) VALUES (?,?,?,?)";
-        jdbcTemplate.update(updateSql, involvedPartyIdentifier, notificationType, transactionType, status);
-    }
-
-    public List<String> findPendingNotifications(String uuid) {
+    public void updateExternalIdentifier(String uuid, String externalId) {
         String sql = """
-                    SELECT e.notification_type
-                    FROM DD_EVENT_TRACK_TBL e
-                    WHERE e.DD_UUID = ?
-                      AND e.status = 'PENDING'
-                      AND NOT EXISTS (
-                        SELECT 1
-                        FROM DD_EVENT_TRACK_TBL r
-                        WHERE r.DD_UUID    = e.DD_UUID  
-                          AND r.notification_type = e.notification_type
-                          AND r.status            = 'RECEIVED'
-                      )
-                """;
-        return jdbcTemplate.query(sql, (rs, i) -> rs.getString(1), uuid);
+        UPDATE DD_ACCOUNT_TBL 
+        SET ORG_NUMBER = ?, UPDATED_TIME = ? 
+        WHERE DD_UUID = ?
+    """;
+        jdbcTemplate.update(sql, externalId, Timestamp.from(Instant.now()), uuid);
     }
 
-    public List<String> findPendingNotifications() {
-        String sql = """
-                    SELECT   e.notification_type
-                       FROM DD_EVENT_TRACK_TBL e
-                       WHERE e.status = 'PENDING'
-                         AND NOT EXISTS (
-                             SELECT 1
-                             FROM DD_EVENT_TRACK_TBL r
-                             WHERE r.DD_UUID = e.DD_UUID
-                               AND r.notification_type = e.notification_type
-                               AND r.status = 'RECEIVED'
-                         )
-                       ORDER BY e.DD_UUID
-                """;
-        return jdbcTemplate.query(sql, (rs, i) -> rs.getString(1));
+
+/*
+    public void updateOrganisationUnitName(String uuid, String organisationUnitName) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET FIRST_NAME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, organisationUnitName, uuid);
+        log.info(" Organisation unit name updated for UUID={}", uuid);
     }
+*/
+public void updateOrganisationUnitName(String uuid, String organisationUnitName) {
 
-    public void insertFinalStatus(String UUID,
+    String sql = """
 
-                                  String finalStatus) {
-        String sql = """
-                    INSERT INTO DD_NOTIFICATION_STATUS
-                      (DD_UUID, STATUS )
-                    VALUES (?, ?)
-                """;
+        UPDATE DD_ACCOUNT_TBL 
 
-        jdbcTemplate.update(sql, UUID, finalStatus);
-    }
+        SET FIRST_NAME = ?, UPDATED_TIME = ? 
+
+        WHERE DD_UUID = ?
+
+    """;
+
+    jdbcTemplate.update(sql, organisationUnitName, Timestamp.from(Instant.now()), uuid);
+
 }
 
+
+    /*public void updatePostalAddress(String uuid, String street, String houseNumber,
+                                    String houseNumberAddition, String postalCode,
+                                    String locality, String countryCode) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET ADDR_STREET_NAME = ?, ADDR_HOUSE_NUMBER = ?, ADDR_BOX_NUMBER = ?, ADDR_POSTAL_CODE = ?, ADDR_LOCALITY_NAME = ?, ADDR_COUNTRY_CODE = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, street, houseNumber, houseNumberAddition, postalCode, locality, countryCode, Timestamp.from(Instant.now()), uuid);
+        log.info("Postal Address updated for UUID={}", uuid);
+    }
+*/
+    public void updatePostalAddress(String uuid,
+
+                                    String street,
+
+                                    String houseNumber,
+
+                                    String houseNumberAddition,
+
+                                    String postalCode,
+
+                                    String locality,
+
+                                    String countryCode) {
+
+        String sql = """
+
+        UPDATE DD_ACCOUNT_TBL 
+
+        SET ADDR_STREET_NAME = ?, 
+
+            ADDR_HOUSE_NUMBER = ?, 
+
+            ADDR_BOX_NUMBER = ?, 
+
+            ADDR_POSTAL_CODE = ?, 
+
+            ADDR_LOCALITY_NAME = ?, 
+
+            ADDR_COUNTRY_CODE = ?, 
+
+            UPDATED_TIME = ?
+
+        WHERE DD_UUID = ?
+
+    """;
+
+        jdbcTemplate.update(sql,
+
+                street,
+
+                houseNumber,
+
+                houseNumberAddition,
+
+                postalCode,
+
+                locality,
+
+                countryCode,
+
+                Timestamp.from(Instant.now()),
+
+                uuid);
+
+    }
+
+
+    public void updateDigitalAddress(String uuid, String digitalAddress) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET DIGITAL_ADDRESS = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+        jdbcTemplate.update(sql, digitalAddress, Timestamp.from(Instant.now()), uuid);
+        log.info("Digital Address updated for UUID={}", uuid);
+    }
+
+//    public void updateHierarchy(String uuid, String parentId) {
+//        String sql = "UPDATE DD_ACCOUNT_TBL SET PARENT_ORG_UUID = ?, UPDATED_TIME = ? WHERE DD_UUID = ?";
+//        jdbcTemplate.update(sql, parentId, Timestamp.from(Instant.now()), uuid);
+//        log.info("Hierarchy updated for UUID={}", uuid);
+//    }
+
+    public void createOuAccountingTableEntry(String ddUuid, String OuName) {
+        String eventId = "null";
+        String sql = "INSERT INTO DD_ACCOUNT_TBL(DD_UUID,FIRST_NAME, EVENT_ID) VALUES (?,?,?)";
+        jdbcTemplate.update(sql, ddUuid, OuName, eventId);
+        log.info("Created ou account table entry for UUID={}", ddUuid);
+    }
+
+    public void insertFullOrganisationUnit(CreateInvolvedPartyResponseV5 response) {
+        InvolvedPartiesOrganisationUnitResponse orgUnit = response.getOrganisationUnit();
+
+        String ddUuid = orgUnit.getInvolvedPartyInternalIdentifiers().get(0).getInvolvedPartyInternalIdentifierValue();
+        String eventId = "null";
+        String typeOfEntity = "ORG_UNIT";
+        String orgName = orgUnit.getOrganisationUnitNames().get(0).getOrganisationUnitName();
+        Timestamp updatedTime = Timestamp.from(Instant.now());
+
+        String sql = "INSERT INTO DD_ACCOUNT_TBL (DD_UUID, EVENT_ID, TYP_OF_ENTY, FIRST_NAME, UPDATED_TIME) VALUES (?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, ddUuid, eventId, typeOfEntity, orgName, updatedTime);
+
+        log.info("Inserted organisation unit record: UUID={}, EVENT_ID={}, ORG_NAME={}", ddUuid, eventId, orgName);
+    }
+/*
+
+    public void insertFullOrganisationUnitWithWrapper(OrganisationUnitDomainWrapper wrapper) {
+
+        String ddUuid = wrapper.getOpsUUID();
+        String eventId = "null";
+        String typeOfEntity = "ORG_UNIT";
+        String orgName = wrapper.getOrganisationUnitName();
+        String streetName = wrapper.getPostalAddressStreetNm();
+        String houseNumber = wrapper.getPostalAddressHouseNum();
+        String boxNumber = wrapper.getPostalAddressHouseNum();
+        String postalCode = wrapper.getPostalAddressPostalCd();
+        String countryCode = wrapper.getPostalAddressCntryCd();
+        String orgNumber = wrapper.getOrgExternalIdentifierVal();
+        String digitalAddress = wrapper.getDigitalAddrEmail();
+
+        Timestamp updatedTime = Timestamp.from(Instant.now());
+
+        String sql = "INSERT INTO DD_ACCOUNT_TBL (\n" +
+                "DD_UUID, EVENT_ID, TYP_OF_ENTY, FIRST_NAME, ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER, ADDR_POSTAL_CODE," +
+                " ADDR_COUNTRY_CODE, ORG_NUMBER, UPDATED_TIME, DIGITAL_ADDRESS) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, ddUuid, eventId, typeOfEntity, orgName, streetName, houseNumber, boxNumber, postalCode,
+                countryCode, orgNumber, updatedTime, digitalAddress);
+
+        log.info("Inserted organisation unit record using wrapper UUID={}", ddUuid);
+    }
+*/
+/*
+
+    public void insertFullOrganisationUnitWithWrapper(OrganisationUnitDomainWrapper wrapper) {
+        String ddUuid = wrapper.getOpsUUID();
+        String eventId = "null"; // Use SQL NULL
+        String typeOfEntity = "ORG_UNIT";
+        String orgName = wrapper.getOrganisationUnitName();
+        String streetName = wrapper.getPostalAddressStreetNm();
+        String houseNumber = wrapper.getPostalAddressHouseNum();
+        String boxNumber = wrapper.getPostalAddressHouseAdd(); // FIXED
+        String postalCode = wrapper.getPostalAddressPostalCd();
+        String locality = wrapper.getPostalAddressCityName(); // ADD locality
+        String countryCode = wrapper.getPostalAddressCntryCd();
+        String orgNumber = wrapper.getOrgExternalIdentifierVal();
+        String digitalAddress = wrapper.getDigitalAddrEmail();
+        Timestamp updatedTime = Timestamp.from(Instant.now());
+
+        String sql = """
+        INSERT INTO DD_ACCOUNT_TBL (
+          DD_UUID, EVENT_ID, TYP_OF_ENTY, FIRST_NAME,
+          ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER,
+          ADDR_POSTAL_CODE, ADDR_LOCALITY_NAME, ADDR_COUNTRY_CODE,
+          ORG_NUMBER, DIGITAL_ADDRESS, UPDATED_TIME
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """;
+
+        jdbcTemplate.update(sql, ddUuid, eventId, typeOfEntity, orgName,
+                streetName, houseNumber, boxNumber, postalCode, locality,
+                countryCode, orgNumber, digitalAddress, updatedTime);
+
+        log.info("Inserted organisation unit record using wrapper UUID={}", ddUuid);
+    }
+*/
+
+    public void updatePostalAddressVerificationDate(String uuid, LocalDate verificationDate) {
+        String sql = "UPDATE DD_ACCOUNT_TBL SET ADDR_LAST_VERIFICATION_DATE=?, UPDATED_TIME=? WHERE DD_UUID=?";
+        jdbcTemplate.update(sql, verificationDate, Timestamp.from(Instant.now()), uuid);
+        log.info("Postal address verification date updated for UUID={}", uuid);
+
+    }
+
+
+    public void insertFullOrganisationUnitWithWrapperMergeSqlServer(OrganisationUnitDomainWrapper wrapper) {
+        String ddUuid = wrapper.getOpsUUID();
+        String eventId = "null";
+        String typeOfEntity = "ORG_UNIT";
+        String orgName = wrapper.getOrganisationUnitName();
+        String streetName = wrapper.getPostalAddressStreetNm();
+        String houseNumber = wrapper.getPostalAddressHouseNum();
+        String boxNumber = wrapper.getPostalAddressHouseAdd();
+        String postalCode = wrapper.getPostalAddressPostalCd();
+        String locality   = wrapper.getPostalAddressCityName();
+        String countryCode = wrapper.getPostalAddressCntryCd();
+        String orgNumber = wrapper.getOrgExternalIdentifierVal();
+        String digitalAddress = wrapper.getDigitalAddrEmail();
+        Timestamp updatedTime = Timestamp.from(Instant.now());
+
+
+        String sql = """
+MERGE INTO DD_ACCOUNT_TBL tgt
+USING (
+  SELECT ? AS DD_UUID,
+         ? AS EVENT_ID,
+         ? AS TYP_OF_ENTY,
+         ? AS FIRST_NAME,
+         ? AS ADDR_STREET_NAME,
+         ? AS ADDR_HOUSE_NUMBER,
+         ? AS ADDR_BOX_NUMBER,
+         ? AS ADDR_POSTAL_CODE,
+         ? AS ADDR_LOCALITY_NAME,
+         ? AS ADDR_COUNTRY_CODE,
+         ? AS ORG_NUMBER,
+         ? AS DIGITAL_ADDRESS,
+         ? AS UPDATED_TIME
+  FROM dual
+) src
+ON (tgt.DD_UUID = src.DD_UUID)
+WHEN MATCHED THEN UPDATE SET
+  tgt.TYP_OF_ENTY        = src.TYP_OF_ENTY,
+  tgt.FIRST_NAME         = src.FIRST_NAME,
+  tgt.ADDR_STREET_NAME   = src.ADDR_STREET_NAME,
+  tgt.ADDR_HOUSE_NUMBER  = src.ADDR_HOUSE_NUMBER,
+  tgt.ADDR_BOX_NUMBER    = src.ADDR_BOX_NUMBER,
+  tgt.ADDR_POSTAL_CODE   = src.ADDR_POSTAL_CODE,
+  tgt.ADDR_LOCALITY_NAME = src.ADDR_LOCALITY_NAME,
+  tgt.ADDR_COUNTRY_CODE  = src.ADDR_COUNTRY_CODE,
+  tgt.ORG_NUMBER         = src.ORG_NUMBER,
+  tgt.DIGITAL_ADDRESS    = src.DIGITAL_ADDRESS,
+  tgt.UPDATED_TIME       = src.UPDATED_TIME
+WHEN NOT MATCHED THEN INSERT (
+  DD_UUID, EVENT_ID, TYP_OF_ENTY, FIRST_NAME,
+  ADDR_STREET_NAME, ADDR_HOUSE_NUMBER, ADDR_BOX_NUMBER,
+  ADDR_POSTAL_CODE, ADDR_LOCALITY_NAME, ADDR_COUNTRY_CODE,
+  ORG_NUMBER, DIGITAL_ADDRESS, UPDATED_TIME
+) VALUES (
+  src.DD_UUID, src.EVENT_ID, src.TYP_OF_ENTY, src.FIRST_NAME,
+  src.ADDR_STREET_NAME, src.ADDR_HOUSE_NUMBER, src.ADDR_BOX_NUMBER,
+  src.ADDR_POSTAL_CODE, src.ADDR_LOCALITY_NAME, src.ADDR_COUNTRY_CODE,
+  src.ORG_NUMBER, src.DIGITAL_ADDRESS, src.UPDATED_TIME
+)
+""";
+
+
+        jdbcTemplate.update(sql, ddUuid, eventId, typeOfEntity, orgName, streetName, houseNumber, boxNumber,
+                postalCode, locality, countryCode, orgNumber, digitalAddress, updatedTime);
+
+        log.info("Upserted organisation unit record using wrapper (SQL Server MERGE) UUID={}", ddUuid);
+    }
+
+}
